@@ -1,0 +1,29 @@
+{
+  "name": "gitquest",
+  "version": "1.0.0",
+  "description": "A git learning game",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.17.0",
+    "npm": ">=11.6.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "eslint": "^10.4.1",
+    "husky": "^9.1.7",
+    "jest": "^30.4.2",
+    "lint-staged": "^16.4.0",
+    "ts-jest": "^29.4.11",
+    "typescript-eslint": "^8.60.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npx eslint --fix"
+    ]
+  }
+}
