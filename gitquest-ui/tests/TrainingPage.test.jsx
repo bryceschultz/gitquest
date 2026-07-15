@@ -5,6 +5,11 @@ import { ProgressProvider } from '../src/context/ProgressContext'
 import TrainingPage from '../src/components/TrainingPage'
 import { MISSIONS } from '../src/missions/Missions'
 
+// Battle flow has 4 independent dimensions: input (empty/incorrect/correct/correct_ws),
+// method (click/enter), attempts (first/after_fail), hint (hint/no_hint) — 32 combinations.
+// Cases below are an all-pairs reduction (every two-way interaction covered at least once)
+// rather than the full cross product, so each test below targets a distinct pair combo.
+
 const originalMission = JSON.parse(JSON.stringify(MISSIONS.M1.levels.M1L2))
 
 const withProvider = (ui) => render(<ProgressProvider>{ui}</ProgressProvider>)
