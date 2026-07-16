@@ -1,8 +1,7 @@
-export const mission2level2 = {
-  id: 'M2L2',
+export const m2l1 = {
+  id: 'M2L1',
   cmd: 'git log',
-  diff: 'easy',
-  done: true,
+  diff: 'med',
   title: 'git log',
   subtitle: 'Review the full commit history',
   briefing: `A new analyst has joined your team and suspects a mole tampered with the repository weeks ago. Review the full commit history to identify any suspicious activity.`,

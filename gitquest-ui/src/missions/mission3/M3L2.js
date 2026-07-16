@@ -1,8 +1,7 @@
-export const mission2level4 = {
-  id: 'M2L4',
+export const m3l2 = {
+  id: 'M3L2',
   cmd: 'git checkout',
-  diff: 'medium',
-  done: true,
+  diff: 'med',
   title: 'git checkout',
   subtitle: 'Switch your working environment to another branch',
   briefing: `The decoy branch is ready. Now you need to move your active workspace into it so your work doesn't interfere with the main investigation.`,
@@ -38,6 +37,7 @@ export const mission2level4 = {
   battle: {
     scenario: `You've already created the decoy-operation branch. What command switches your working environment to it?`,
     expected: 'git checkout decoy-operation',
+    accept: ['git switch decoy-operation'],
     hint: 'git checkout followed by the branch name.',
   },
 }

@@ -1,5 +1,5 @@
-export const mission1level4 = {
-  id: 'M1L4',
+export const m1l5 = {
+  id: 'M1L5',
   cmd: 'git commit',
   diff: 'easy',
   title: 'git commit',
@@ -36,6 +36,7 @@ export const mission1level4 = {
   battle: {
     scenario: `You have staged your evidence and are ready to save it to the investigation history. Record it with the message: "Discovered Shadow Breach command server".`,
     expected: 'git commit -m "Discovered Shadow Breach command server"',
+    accept: ["git commit -m 'Discovered Shadow Breach command server'"],
     hint: 'Use -m followed by a quoted commit message.',
   },
 }

@@ -1,8 +1,7 @@
-export const mission2level5 = {
-  id: 'M2L5',
+export const m2l4 = {
+  id: 'M2L4',
   cmd: 'git restore',
-  diff: 'medium',
-  done: true,
+  diff: 'med',
   title: 'git restore',
   subtitle: 'Discard uncommitted changes to a file',
   briefing: `An analyst on your team accidentally overwrote suspect-file.txt with incorrect data. The file hasn't been committed yet — restore it to its last known good state before the error becomes permanent.`,
@@ -39,6 +38,7 @@ export const mission2level5 = {
   battle: {
     scenario: `suspect-file.txt has been modified incorrectly and is not yet staged. What command reverts it to the version from your last commit?`,
     expected: 'git restore suspect-file.txt',
+    accept: ['git checkout -- suspect-file.txt'],
     hint: 'Restore a single specific file to its last committed state.',
   },
 }

@@ -1,7 +1,7 @@
-export const mission1level5 = {
-  id: 'M1L5',
+export const m2l3 = {
+  id: 'M2L3',
   cmd: 'git commit --amend --no-edit',
-  diff: 'medium',
+  diff: 'med',
   title: 'git commit --amend --no-edit',
   subtitle: 'Update the most recent commit without changing its message',
   briefing: `Minutes after submitting your report, another analyst notices that an important forensic log file was accidentally omitted. Fortunately, the report hasn't been archived yet — you can still fix it.`,
@@ -36,6 +36,9 @@ export const mission1level5 = {
   battle: {
     scenario: `A forensic log containing proof of the hackers' activities was accidentally left out of your most recent report. You've staged the missing file and want to add it to your last commit while keeping the existing commit message.`,
     expected: 'git commit --amend --no-edit',
+    reject: [
+      { cmd: 'git commit --amend', message: 'Close \u2014 but plain --amend opens the editor to change the message. The scenario says the message must stay untouched; there\u2019s a flag for that.' },
+    ],
     hint: 'Amend the last commit, but skip the message editor.',
   },
 }

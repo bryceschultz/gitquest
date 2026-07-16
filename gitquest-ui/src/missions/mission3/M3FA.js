@@ -1,0 +1,107 @@
+export const m3fa = {
+  id: 'M3FA',
+  cmd: 'FIELD ASSIGNMENT',
+  diff: 'med',
+  title: 'Field Assignment: The Decoy Operation',
+  subtitle: 'The professional feature-branch workflow, end to end',
+  briefing: `HQ has approved the decoy operation. You'll run the exact workflow professional teams use every week: open a branch, work on it, survive an interruption, bring your branch up to date with HQ, fold your work back into the record, and clean up after yourself. This is the rhythm of real team development.`,
+  sections: [
+    {
+      heading: 'Your objective',
+      body: `Execute a complete feature-branch cycle: branch → switch → get interrupted (stash) → resume (pop) → commit → return to main → sync with the remote → merge → delete the finished branch.`,
+    },
+    {
+      heading: 'In the real world',
+      body: `On a real team, the merge step usually happens through a Pull Request — a reviewed merge on the hosting platform. The Git mechanics you're about to run are exactly what the PR performs after approval.`,
+    },
+  ],
+  battle: {
+    type: 'sequence',
+    steps: [
+      {
+        objective: 'Open a covert thread',
+        scenario: `Create a new branch named decoy-operation for the covert work. Don't switch to it yet.`,
+        expected: 'git branch decoy-operation',
+        accept: ['git branch decoy-operation'],
+        hint: 'Create only — switching is the next step.',
+        success: 'Branch created. The main record remains untouched.',
+      },
+      {
+        objective: 'Move onto the thread',
+        scenario: `Switch your working directory onto the decoy-operation branch.`,
+        expected: 'git checkout decoy-operation',
+        accept: ['git checkout decoy-operation', 'git switch decoy-operation'],
+        hint: 'checkout or switch — both move you onto the branch.',
+        success: 'You are now working on decoy-operation.',
+      },
+      {
+        objective: 'Handle the interruption',
+        scenario: `URGENT — HQ needs you elsewhere immediately, but your decoy plans are half-written and not ready to commit. Shelve the uncommitted work without committing it.`,
+        expected: 'git stash',
+        accept: ['git stash'],
+        reject: [
+          { cmd: 'git commit -m <message>', message: 'Half-finished plans don\u2019t go on the record. Shelve them without committing.' },
+        ],
+        hint: 'Save it in the drawer, not the record.',
+        success: 'Work shelved; clean directory. Emergency handled off-screen. Now get back to it.',
+      },
+      {
+        objective: 'Resume where you left off',
+        scenario: `The emergency is over. Restore your shelved decoy plans and remove them from the shelf.`,
+        expected: 'git stash pop',
+        accept: ['git stash pop'],
+        hint: 'Restore AND remove from the stash.',
+        success: 'Plans restored exactly as you left them.',
+      },
+      {
+        objective: 'Record the finished plan',
+        scenario: `The decoy plan is complete and staged. Commit it with a message.`,
+        expected: 'git commit -m "Complete decoy operation plan"',
+        accept: ['git commit -m <message>'],
+        hint: 'Standard commit with a message.',
+        success: 'Decoy plan committed on the branch.',
+      },
+      {
+        objective: 'Return to the main record',
+        scenario: `Your branch work is done. Move back to the main branch to integrate it.`,
+        expected: 'git checkout main',
+        accept: ['git checkout main', 'git switch main'],
+        hint: 'You merge INTO the branch you\u2019re standing on — so stand on main.',
+        success: 'Back on main.',
+      },
+      {
+        objective: 'See what HQ changed',
+        scenario: `Other agents pushed while you worked. Download the remote's latest state WITHOUT merging anything yet.`,
+        expected: 'git fetch',
+        accept: ['git fetch', 'git fetch origin'],
+        reject: [
+          { cmd: 'git pull', message: 'pull downloads AND merges immediately. Protocol here is to inspect before integrating — download only.' },
+        ],
+        hint: 'Download only. Look before you merge.',
+        success: 'Remote state downloaded. Nothing conflicts with your plan.',
+      },
+      {
+        objective: 'Fold the work into the record',
+        scenario: `Bring the completed decoy-operation branch into main.`,
+        expected: 'git merge decoy-operation',
+        accept: ['git merge decoy-operation'],
+        reject: [
+          { cmd: 'git merge main', message: 'Direction check: you are ON main. Name the branch whose work you\u2019re bringing IN.' },
+        ],
+        hint: 'Merge the other branch into where you stand.',
+        success: 'Decoy plan merged into the official record. (On a real team, this step is a Pull Request.)',
+      },
+      {
+        objective: 'Clean up',
+        scenario: `The decoy-operation branch is fully merged and finished. Delete it locally, safely.`,
+        expected: 'git branch -d decoy-operation',
+        accept: ['git branch -d decoy-operation'],
+        reject: [
+          { cmd: 'git branch -D decoy-operation', message: 'Capital -D force-deletes even UNMERGED work. The branch is merged — the safe lowercase -d is all you need.' },
+        ],
+        hint: 'The safe delete — lowercase.',
+        success: 'Workspace clean. That was a textbook feature-branch cycle, Agent — the exact rhythm of professional teams.',
+      },
+    ],
+  },
+}

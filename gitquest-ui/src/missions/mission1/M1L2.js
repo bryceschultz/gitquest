@@ -1,4 +1,4 @@
-export const mission1level2 = {
+export const m1l2 = {
   id: 'M1L2',
   cmd: 'git pull',
   diff: 'easy',

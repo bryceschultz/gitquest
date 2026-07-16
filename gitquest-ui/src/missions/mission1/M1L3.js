@@ -1,8 +1,7 @@
-export const mission2level1 = {
-  id: 'M2L1',
+export const m1l3 = {
+  id: 'M1L3',
   cmd: 'git status',
   diff: 'easy',
-  done: true,
   title: 'git status',
   subtitle: 'Check what has changed in your working directory',
   briefing: `Before taking any action, a good agent always checks what's changed. Before filing your next report, you need to know exactly which files have been modified and which are ready to submit. Run a field status check on your investigation folder.`,

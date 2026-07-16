@@ -1,13 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-
-const ProgressContext = createContext(null);
-const STORAGE_KEY = 'gitquest-progress';
-
-const defaultProgress = {
-  completedLevels: [], // e.g. ['M1-L1', 'M1-L2', 'M3-L3']
-  currentMission: 'M1',
-  currentLevel: 'M1L1',
-};
+import { useEffect, useState } from 'react';
+import { ProgressContext, STORAGE_KEY, defaultProgress } from './context';
+import { updatedAchievements } from '../game/achievements';
+import { coinBalance } from '../game/stats';
 
 function loadFromStorage() {
   try {
@@ -18,20 +12,48 @@ function loadFromStorage() {
   }
 }
 
-export function ProgressProvider({ children }) {
-  const [progress, setProgress] = useState(loadFromStorage);
+// Minimal shape check for imported files: reject anything that would put the
+// app into an unusable state. Unknown extra keys are dropped by the merge.
+function isValidProgressShape(parsed) {
+  return (
+    parsed !== null &&
+    typeof parsed === 'object' &&
+    !Array.isArray(parsed) &&
+    (parsed.completedLevels === undefined || Array.isArray(parsed.completedLevels))
+  );
+}
 
-  // Auto-save to localStorage whenever progress changes
+// Any state transition that can change what's been completed or scored also
+// re-evaluates achievements, so badges are always derived from real progress.
+function withAchievements(progress) {
+  return { ...progress, achievements: updatedAchievements(progress) };
+}
+
+export function ProgressProvider({ children }) {
+  const [progress, setProgress] = useState(() => withAchievements(loadFromStorage()));
+
+  // Auto-save to localStorage whenever progress changes.
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    } catch {
+      // Storage unavailable (private mode / quota): the session still works,
+      // it just won't persist. Nothing actionable to surface mid-battle.
+    }
   }, [progress]);
 
-  function completeLevel(levelId) {
-    setProgress(prev =>
-      prev.completedLevels.includes(levelId)
-        ? prev
-        : { ...prev, completedLevels: [...prev.completedLevels, levelId] }
-    );
+  // Mark a lesson complete and record its assessment score (best score kept).
+  function completeLevel(levelId, score) {
+    setProgress(prev => {
+      const completedLevels = prev.completedLevels.includes(levelId)
+        ? prev.completedLevels
+        : [...prev.completedLevels, levelId];
+      const scores = { ...prev.scores };
+      if (typeof score === 'number') {
+        scores[levelId] = Math.max(scores[levelId] ?? 0, score);
+      }
+      return withAchievements({ ...prev, completedLevels, scores });
+    });
   }
 
   function isLevelComplete(levelId) {
@@ -44,6 +66,30 @@ export function ProgressProvider({ children }) {
 
   function setMode(mode) {
     setProgress(prev => ({ ...prev, mode }));
+  }
+
+  function recordHintUsed() {
+    setProgress(prev => ({ ...prev, hintsUsed: (prev.hintsUsed ?? 0) + 1 }));
+  }
+
+  function setPlacement(result) {
+    setProgress(prev => ({ ...prev, placement: { ...result, date: new Date().toISOString().slice(0, 10) } }));
+  }
+
+  // Arsenal purchase. Guarded: no double-purchase, no negative balance.
+  function purchaseItem(itemId, cost) {
+    let ok = false;
+    setProgress(prev => {
+      if (prev.inventory.includes(itemId)) return prev;
+      if (coinBalance(prev) < cost) return prev;
+      ok = true;
+      return { ...prev, inventory: [...prev.inventory, itemId], spentCoins: (prev.spentCoins ?? 0) + cost };
+    });
+    return ok;
+  }
+
+  function ownsItem(itemId) {
+    return progress.inventory.includes(itemId);
   }
 
   function resetProgress() {
@@ -68,7 +114,11 @@ export function ProgressProvider({ children }) {
       reader.onload = () => {
         try {
           const parsed = JSON.parse(reader.result);
-          setProgress({ ...defaultProgress, ...parsed });
+          if (!isValidProgressShape(parsed)) {
+            reject(new Error('Not a valid GitQuest progress file'));
+            return;
+          }
+          setProgress(withAchievements({ ...defaultProgress, ...parsed }));
           resolve(parsed);
         } catch (err) {
           reject(err);
@@ -85,16 +135,14 @@ export function ProgressProvider({ children }) {
     isLevelComplete,
     setCurrent,
     setMode,
+    recordHintUsed,
+    setPlacement,
+    purchaseItem,
+    ownsItem,
     resetProgress,
     exportProgress,
     importProgress,
   };
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;
-}
-
-export function useProgress() {
-  const ctx = useContext(ProgressContext);
-  if (!ctx) throw new Error('useProgress must be used inside a ProgressProvider');
-  return ctx;
 }

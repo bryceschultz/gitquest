@@ -1,5 +1,5 @@
 
-import { GitInstruction } from "../Git";
+import { GitInstruction } from "./Git";
 
 describe('Parsing basic operations', () => {
   test('clone operation', () => {

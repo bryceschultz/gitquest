@@ -1,5 +1,5 @@
-export const mission1level3 = {
-  id: 'M1L3',
+export const m1l4 = {
+  id: 'M1L4',
   cmd: 'git add',
   diff: 'easy',
   title: 'git add',
@@ -39,6 +39,10 @@ export const mission1level3 = {
   battle: {
     scenario: `You updated attack-report.txt with details about a newly discovered command server. Your handler says: "Stage only that file for now."`,
     expected: 'git add attack-report.txt',
+    reject: [
+      { cmd: 'git add .', message: 'That stages EVERYTHING in the directory \u2014 this scenario asks you to stage only the one evidence file, by name.' },
+      { cmd: 'git add -A', message: 'That stages every change in the repository \u2014 stage only the one evidence file, by name.' },
+    ],
     hint: 'Stage a single specific file, not everything.',
   },
 }
