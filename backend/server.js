@@ -38,7 +38,7 @@ app.use('/api/agents',   agentRoutes);
 app.use('/api/levels',   levelRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/battles',  battleRoutes);
-app.use('/api/collectibles',  collectibleRoutes);
+app.use('/api/collectible',  collectibleRoutes);
 app.use('/api/stats',    statsRoutes);
 app.use('/api/trophies', trophyRoutes);
 

@@ -7,7 +7,7 @@ const collectibleSchema = new mongoose.Schema({
         enum: ['tool', 'boost', 'cosmetic'] },
     coinCost:    { type: Number, required: true, default: 0, min: 0 },
     isAvailable: { type: Boolean, default: true },
-    iconUrl:     { type: String, default: null },
+    emoji:     { type: String, default: null },
     effect:      { type: String, default: null },
 }, { timestamps: true });
 

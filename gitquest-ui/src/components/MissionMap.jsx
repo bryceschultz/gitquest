@@ -200,7 +200,7 @@ function MissionPanel({level, missions, onClose, onStartLevel}) {
  * @returns {JSX.Element}
  * @constructor
  */
-export default function MissionMap({agent, onBack, onStartLevel, onOpenArsenal, onOpenTrophy}) {
+export default function MissionMap({ agent, onBack, onStartLevel, onOpenArsenal, onOpenTrophy, onOpenLeaderboard }) {
     const {isLevelComplete, progress} = useProgress()
     const [levels, setLevels] = useState([])
     const [missions, setMissions] = useState([])
@@ -255,14 +255,7 @@ export default function MissionMap({agent, onBack, onStartLevel, onOpenArsenal, 
         <div style={{display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1}}>
 
             {/* Topbar */}
-            <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '12px 16px',
-                borderBottom: '1px solid #1a2a45',
-                background: '#080c17'
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid #1a2a45', background: '#080c17', position: 'sticky', top: 0, zIndex: 10 }}>
                 <span style={{
                     fontSize: 11,
                     color: '#00ff88',
@@ -319,7 +312,7 @@ export default function MissionMap({agent, onBack, onStartLevel, onOpenArsenal, 
                     flexDirection: 'column',
                     gap: 8
                 }}>
-                    {['Intel Room', 'Arsenal'].map(label => (
+                    {['Trophy Room', 'Arsenal'].map(label => (
                         <button key={label}
                                 style={{
                                     display: 'flex',
@@ -336,9 +329,15 @@ export default function MissionMap({agent, onBack, onStartLevel, onOpenArsenal, 
                                 }}
                                 onClick={() => label === 'Arsenal' ? onOpenArsenal() : onOpenTrophy()}
                         >
-                            {label === 'Intel Room' ? '🏆' : '🔧'} {label}
+                            {label === 'Trophy Room' ? '🏆' : '🔧'} {label}
                         </button>
                     ))}
+                    <button
+                        onClick={onOpenLeaderboard}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#c8daf0', background: '#0d1526', border: '1px solid #1a2a45', borderRadius: 99, padding: '7px 16px', cursor: 'pointer', fontFamily: 'monospace' }}
+                    >
+                        🏆 Leaderboard
+                    </button>
                     <button
                         onClick={onBack}
                         style={{
@@ -355,7 +354,7 @@ export default function MissionMap({agent, onBack, onStartLevel, onOpenArsenal, 
                             fontFamily: 'monospace'
                         }}
                     >
-                        ✕ Abort Mission
+                        ✕ Abort
                     </button>
                     <button
                         onClick={() => setShowCredits(true)}
@@ -364,7 +363,7 @@ export default function MissionMap({agent, onBack, onStartLevel, onOpenArsenal, 
                             alignItems: 'center',
                             gap: 8,
                             fontSize: 12,
-                            color: '#4a6fa5',
+                            color: '#00ff88',
                             background: '#0d1526',
                             border: '1px solid #1a2a45',
                             borderRadius: 99,

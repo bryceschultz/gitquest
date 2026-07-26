@@ -8,8 +8,6 @@ const battleSchema = new mongoose.Schema({
     hintUsed:       { type: Boolean, default: false },
     passed:         { type: Boolean, default: false },
     perfectPass:    { type: Boolean, default: false },
-    livesAtStart:   { type: Number, default: 5, min: 0, max: 5 },
-    livesRemaining: { type: Number, default: 5, min: 0, max: 5 },
     xpEarned:       { type: Number, default: 0 },
     coinsEarned:    { type: Number, default: 0 },
     startedAt:      { type: Date, default: Date.now },

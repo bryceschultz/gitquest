@@ -3,8 +3,9 @@ import './App.css'
 import WelcomeScreen from './components/WelcomeScreen'
 import MissionMap from './components/MissionMap'
 import TrainingPage from './components/TrainingPage'
-import Arsenal from './components/Arsenal'
 import TrophyRoom from './components/TrophyRoom'
+import Arsenal from './components/Arsenal'
+import Leaderboard from './components/Leaderboard'
 import SignInPage from './components/SignInPage'
 import SignUpPage from './components/SignUpPage'
 import { ProgressProvider, useProgress } from './context/ProgressContext'
@@ -23,7 +24,7 @@ const BASE_URL  = 'http://localhost:5001/api'
  * @constructor
  */
 function AppInner() {
-    const { progress, reloadProgress, resetProgress, loadCoins } = useProgress()
+    const { progress, reloadProgress, resetProgress, loadCoins, loadXP } = useProgress()
     const [screen, setScreen]           = useState('signin')
     const [activeLevel, setActiveLevel] = useState(null)
     const [agent, setAgent]             = useState(null)
@@ -57,6 +58,7 @@ function AppInner() {
     async function handleSignIn(agentData) {
         setAgent(agentData)
         loadCoins(agentData.coins ?? 0)
+        loadXP(agentData.totalXP ?? 0)
         await reloadProgress()
         setScreen('welcome')
     }
@@ -67,6 +69,7 @@ function AppInner() {
     async function handleSignUp(agentData) {
         setAgent(agentData)
         loadCoins(agentData.coins ?? 0)
+        loadXP(agentData.totalXP ?? 0)
         await reloadProgress()
         setScreen('welcome')
     }
@@ -115,20 +118,22 @@ function AppInner() {
                 <div style={{ position: 'fixed', top: '1rem', left: '1rem', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#00ff88', background: '#0d1526', border: '1px solid #00ff8844', borderRadius: 99, padding: '6px 14px', zIndex: 100, fontFamily: 'monospace' }}>
                     ◈ {agent.codename}
                     <span style={{ color: '#4a6fa5' }}>·</span>
-                    <span style={{ color: '#ffb700' }}>💰 {progress.coins ?? 0}</span>
+                    <span style={{ color: '#9a6fcf' }}>⚡ {progress.totalXP ?? 0} XP</span>
                 </div>
             )}
 
             {screen === 'signin'  && <SignInPage  onSignIn={handleSignIn}  onGoToSignUp={() => setScreen('signup')} />}
             {screen === 'signup'  && <SignUpPage  onSignUp={handleSignUp}  onGoToSignIn={() => setScreen('signin')} />}
             {screen === 'welcome' && <WelcomeScreen onSelect={() => setScreen('map')} onLogout={handleLogout} />}
+            {screen === 'leaderboard' && (<Leaderboard agent={agent} onBack={() => setScreen('map')} />)}
 
             {screen === 'map' && (
                 <MissionMap
                     agent={agent}
                     onBack={() => setScreen('welcome')}
-                    onOpenArsenal={() => setScreen('arsenal')}
                     onOpenTrophy={() => setScreen('trophy')}
+                    onOpenArsenal={() => setScreen('arsenal')}
+                    onOpenLeaderboard={() => setScreen('leaderboard')}
                     onStartLevel={(missionId, levelId, allMissions) => {
                         setActiveLevel({ missionId, levelId, allMissions })
                         setScreen('training')

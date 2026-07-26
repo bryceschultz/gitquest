@@ -57,19 +57,37 @@ router.post('/signin', async (req, res) => {
         if (!valid)
             return res.status(401).json({ error: 'Invalid email or password' });
 
-        // ── Streak logic ──────────────────────────────────────────
-        const today     = new Date();
-        const last      = agent.lastActiveDate;
-        const oneDay    = 86400000;
-        const diffDays  = last ? Math.floor((today - last) / oneDay) : null;
+        // ── Streak logic ──────────────────────────────────────────────
+        const today     = new Date()
+        const last      = agent.lastActiveDate
 
-        if      (diffDays === null) agent.streak = 1;
-        else if (diffDays === 1)    agent.streak += 1;
-        else if (diffDays > 1)      agent.streak = 1;
-        // same day → no change
+        // Compare calendar dates only (ignore time of day)
+        const toDateStr = (d) => new Date(d).toISOString().split('T')[0]
+        const todayStr  = toDateStr(today)
+        const lastStr   = last ? toDateStr(last) : null
 
-        agent.lastActiveDate = today;
-        await agent.save();
+        if (!lastStr) {
+            // First ever login
+            agent.streak = 1
+        } else if (lastStr === todayStr) {
+            // Already logged in today — no change
+        } else {
+            // Check if yesterday
+            const yesterday = new Date(today)
+            yesterday.setDate(yesterday.getDate() - 1)
+            const yesterdayStr = toDateStr(yesterday)
+
+            if (lastStr === yesterdayStr) {
+                // Consecutive day
+                agent.streak += 1
+            } else {
+                // Missed one or more days
+                agent.streak = 1
+            }
+        }
+
+        agent.lastActiveDate = today
+        await agent.save()
 
         const token = jwt.sign({ id: agent._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 

@@ -13,6 +13,7 @@ const BASE_URL = 'http://localhost:5001/api';
 export function ProgressProvider({ children }) {
   const [completedIds, setCompletedIds] = useState(new Set())
   const [coins, setCoins]               = useState(0)
+  const [totalXP, setTotalXP]           = useState(0)
   const [loaded, setLoaded]             = useState(false)
 
   // ── Load progress from DB on mount ───────────────────────
@@ -52,15 +53,23 @@ export function ProgressProvider({ children }) {
   }, [completedIds])
 
   // Replace addCoins with a DB-backed version
-  const addCoins = useCallback(async (amount) => {
-    // Optimistically update UI
-    setCoins(prev => prev + amount)
-    // DB is updated by the battles/complete endpoint, no extra call needed here
+  const addCoins = useCallback((amount) => {
+    setCoins(prev => Math.max(0, prev + amount))
   }, [])
 
   // Load initial coin balance from agent data
   const loadCoins = useCallback((amount) => {
     setCoins(amount ?? 0)
+  }, [])
+
+  // Add XP
+  const addXP = useCallback((amount) => {
+    setTotalXP(prev => prev + amount)
+  }, [])
+
+  // Load XP from agent data
+  const loadXP = useCallback((amount) => {
+    setTotalXP(amount ?? 0)
   }, [])
 
   // ── Reload progress (call after sign-in) ─────────────────
@@ -85,9 +94,12 @@ export function ProgressProvider({ children }) {
     isLevelComplete,
     addCoins,
     loadCoins,
+    totalXP,
+    loadXP,
+    addXP,
     reloadProgress,
     resetProgress,
-    progress: { coins },
+    progress: { coins, totalXP },
   }
 
   return (

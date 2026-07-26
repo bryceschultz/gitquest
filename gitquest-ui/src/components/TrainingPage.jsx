@@ -212,7 +212,7 @@ function BattleSection({ battle, command, onComplete, onBattleStart }) {
 
 // ── Training Page ─────────────────────────────────────────────
 export default function TrainingPage({ missionId, levelId, allMissions = [], onBack, onComplete }) {
-    const { completeLevel, addCoins }   = useProgress()
+    const { completeLevel, addCoins, addXP }   = useProgress()
     const [mission, setMission]         = useState(null)
     const [command, setCommand]         = useState(null)
     const [loading, setLoading]         = useState(true)
@@ -269,7 +269,8 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
     // ── onMissionComplete ───────────────────────────────────────
     async function handleMissionComplete(attempts, hintUsed) {
         completeLevel(missionId)
-        if (typeof addCoins === 'function') addCoins(COINS_PER_MISSION)
+        if (typeof addCoins === 'function') addCoins(COINS_PER_MISSION) // 10 XP per mission
+        if (typeof addXP === 'function')   addXP(20)   // 20 XP per mission
         // Save battle record to DB
         try {
             await fetch(`${BASE_URL}/battles/complete`, {

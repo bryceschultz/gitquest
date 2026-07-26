@@ -12,7 +12,7 @@ router.get('/', requireAuth, async (req, res) => {
         const agentId = req.agentId;
 
         const [agent, allBattles, uniqueCompleted, totalMissionCount] = await Promise.all([
-            Agent.findById(agentId),
+            Agent.findById(agentId).lean(),
             Battle.find({ agentId }),                                    // all battle attempts
             AgentProgress.find({ agentId, status: 'completed' }),        // unique missions passed
             Mission.countDocuments(),

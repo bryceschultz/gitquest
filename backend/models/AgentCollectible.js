@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const agentCollectibleSchema = new mongoose.Schema({
     agentId:    { type: mongoose.Schema.Types.ObjectId, ref: 'Agent',   required: true },
-    arsenalId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Collectible', required: true },
+    collectibleId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Collectible', required: true },
     unlockedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
