@@ -1,0 +1,17 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd gitquest-ui
+        - npm install
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: gitquest-ui/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - gitquest-ui/node_modules/**/*
