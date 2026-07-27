@@ -46,11 +46,13 @@ app.use('/api/trophies', trophyRoutes);
 app.get('/api/health', (_, res) => res.json({ status: 'online' }));
 
 // ── Connect to MongoDB & start server ─────────────────────────
+const PORT = process.env.PORT || 5001;
+
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('✔ Connected to MongoDB');
-        app.listen(process.env.PORT, () =>
-            console.log(`✔ Server running on port ${process.env.PORT}`)
+        app.listen(PORT, '0.0.0.0', () =>
+            console.log(`✔ Server running on port ${PORT}`)
         );
     })
     .catch(err => {
