@@ -16,7 +16,7 @@ const GRID_STYLE = {
     backgroundSize: '40px 40px',
 }
 
-const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/Trent Reznor - Intriguing Possibilities.wav' // const AUDIO_URL = 'http://localhost:5001/audio/Trent Reznor - Intriguing Possibilities.wav'
+const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/1.7_1-consumatesurvivor.caf.wav' // const AUDIO_URL = 'http://localhost:5001/audio/Trent Reznor - Intriguing Possibilities.wav'
 const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL  = 'http://localhost:5001/api'
 
 /**
@@ -29,7 +29,50 @@ function AppInner() {
     const [activeLevel, setActiveLevel] = useState(null)
     const [agent, setAgent]             = useState(null)
     const [soundOn, setSoundOn]         = useState(true)
+    const [sessionChecked, setSessionChecked] = useState(false)
     const audioRef                      = useRef(null)
+
+    // ── Restore session on page load/refresh ──────────────────
+    useEffect(() => {
+        async function restoreSession() {
+            try {
+                const res = await fetch(`${BASE_URL}/auth/me`, {
+                    credentials: 'include',
+                })
+                if (res.ok) {
+                    const { agent: agentData } = await res.json()
+                    setAgent(agentData)
+                    loadCoins(agentData.coins ?? 0)
+                    loadXP(agentData.totalXP ?? 0)
+                    await reloadProgress()
+                    setScreen('welcome')
+                }
+            } catch (err) {
+                console.error('Session restore failed:', err)
+            } finally {
+                setSessionChecked(true)
+            }
+        }
+        restoreSession()
+    }, [])
+
+    // ── Don't render anything until session check is done ─────
+    if (!sessionChecked) {
+        return (
+            <div style={{
+                display: 'flex', flexDirection: 'column',
+                minHeight: '100vh', alignItems: 'center', justifyContent: 'center',
+                background: '#0a0e1a', fontFamily: 'monospace',
+            }}>
+                <div style={{ color: '#00ff88', marginBottom: 8, fontSize: 14 }}>
+                    ◈ INITIALIZING SECURE CHANNEL...
+                </div>
+                <div style={{ color: '#2a3a55', fontSize: 11 }}>
+                    Verifying agent credentials
+                </div>
+            </div>
+        )
+    }
 
     // Initialize audio once
     useEffect(() => {

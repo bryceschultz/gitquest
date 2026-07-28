@@ -1,0 +1,53 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and Deploy Backend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t gitquest-backend .
+
+      - name: Tag Docker image
+        run: |
+          docker tag gitquest-backend:latest \
+          301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest
+
+      - name: Push Docker image
+        run: |
+          docker push \
+          301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest
+
+      - name: Deploy ECS Express service
+        run: |
+          aws ecs update-express-gateway-service \
+            --service-arn arn:aws:ecs:us-east-1:301846842985:service/default/gitquest-backend \
+            --primary-container image=301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest \
+            --region us-east-1
