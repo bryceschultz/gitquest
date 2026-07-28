@@ -16,7 +16,7 @@ const GRID_STYLE = {
     backgroundSize: '40px 40px',
 }
 
-const AUDIO_URL = import.meta.env.VITE_API_URL + '/audio/Trent Reznor - Intriguing Possibilities.wav' // const AUDIO_URL = 'http://localhost:5001/audio/Trent Reznor - Intriguing Possibilities.wav'
+const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/Trent Reznor - Intriguing Possibilities.wav' // const AUDIO_URL = 'http://localhost:5001/audio/Trent Reznor - Intriguing Possibilities.wav'
 const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL  = 'http://localhost:5001/api'
 
 /**
