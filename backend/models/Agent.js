@@ -15,6 +15,18 @@ const agentSchema = new mongoose.Schema({
     totalXP:        { type: Number, default: 0, min: 0 },
     rank:           { type: String, default: 'Recruit',
         enum: ['Recruit','Field Agent'] },
+    // Result of the Field Agent placement quiz — a recommendation only.
+    // Field agents keep free-roam access to every mission regardless of
+    // this result; it's stored so the UI can surface where HQ suggests
+    // they begin.
+    placement: {
+        recommendedLevel: { type: Number,  default: null },
+        pct:               { type: Number,  default: null },
+        correct:           { type: Number,  default: null },
+        total:             { type: Number,  default: null },
+        passed:            { type: Boolean, default: null },
+        completedAt:       { type: Date,    default: null },
+    },
 }, { timestamps: true });
 
 export default mongoose.model('Agent', agentSchema);

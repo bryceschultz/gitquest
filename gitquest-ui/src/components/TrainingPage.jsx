@@ -3,6 +3,7 @@ import { useProgress } from '../context/ProgressContext'
 
 const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL = 'http://localhost:5001/api'
 const COINS_PER_MISSION = 10
+const XP_PER_MISSION = 20
 
 const RARITY_COLORS = {
     common:    '#4a6fa5',
@@ -220,6 +221,7 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
     const [battleDone, setBattleDone]   = useState(false)
     const [showModal, setShowModal]     = useState(false)
     const [showToast, setShowToast]     = useState(false)
+    const [earnedCoins, setEarnedCoins] = useState(COINS_PER_MISSION)
     const [levelNumber, setLevelNumber] = useState(null)
     const [newTrophies, setNewTrophies] = useState([])
     const [skippedTraining, setSkippedTraining] = useState(false)
@@ -269,11 +271,15 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
     // ── onMissionComplete ───────────────────────────────────────
     async function handleMissionComplete(attempts, hintUsed) {
         completeLevel(missionId)
-        if (typeof addCoins === 'function') addCoins(COINS_PER_MISSION) // 10 XP per mission
-        if (typeof addXP === 'function')   addXP(20)   // 20 XP per mission
+
+        // Base rewards — overridden below by the server response, which may
+        // apply an equipped Double XP Token / Coin Multiplier boost.
+        let earnedXP    = XP_PER_MISSION
+        let earnedCoins = COINS_PER_MISSION
+
         // Save battle record to DB
         try {
-            await fetch(`${BASE_URL}/battles/complete`, {
+            const res = await fetch(`${BASE_URL}/battles/complete`, {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -283,13 +289,19 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
                     attempts,
                     hintUsed,
                     passed:        true,
-                    xpEarned:      10,
+                    xpEarned:      XP_PER_MISSION,
                     coinsEarned:   COINS_PER_MISSION,
                 }),
             })
+            const data = await res.json()
+            if (typeof data.xpEarned === 'number')    earnedXP = data.xpEarned
+            if (typeof data.coinsEarned === 'number') earnedCoins = data.coinsEarned
         } catch (err) {
             console.error('Failed to save battle:', err)
         }
+
+        if (typeof addCoins === 'function') addCoins(earnedCoins)
+        if (typeof addXP === 'function')    addXP(earnedXP)
 
         // Update session mission count
         const newCount = sessionMissionCountRef.current + 1
@@ -302,6 +314,7 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
             : null
 
         // Show coin toast
+        setEarnedCoins(earnedCoins)
         setShowToast(true)
         setTimeout(() => setShowToast(false), 3000)
 
@@ -367,7 +380,7 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
 
             {/* Coin toast */}
-            {showToast && <CoinToast coins={COINS_PER_MISSION} />}
+            {showToast && <CoinToast coins={earnedCoins} />}
 
             {/* Trophy toast queue */}
             {newTrophies.length > 0 && (

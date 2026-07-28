@@ -18,6 +18,46 @@ router.get('/me', requireAuth, async (req, res) => {
     }
 });
 
+// POST /api/agents/placement — persist the Field Agent placement quiz result.
+// This is a recommendation only; it does not gate access to any mission.
+router.post('/placement', requireAuth, async (req, res) => {
+    try {
+        const { recommendedLevel, pct, correct, total, passed } = req.body;
+
+        const valid =
+            typeof recommendedLevel === 'number' &&
+            typeof pct     === 'number' &&
+            typeof correct === 'number' &&
+            typeof total   === 'number' &&
+            typeof passed  === 'boolean';
+
+        if (!valid) {
+            return res.status(400).json({ error: 'Invalid placement payload' });
+        }
+
+        const agent = await Agent.findByIdAndUpdate(
+            req.agentId,
+            {
+                placement: {
+                    recommendedLevel,
+                    pct,
+                    correct,
+                    total,
+                    passed,
+                    completedAt: new Date(),
+                },
+            },
+            { new: true }
+        ).select('-passwordHash');
+
+        if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+        res.json({ agent });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // GET /api/agents/leaderboard?type=alltime|level
 router.get('/leaderboard', requireAuth, async (req, res) => {
     try {
