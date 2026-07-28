@@ -45,6 +45,6 @@ jobs:
       - name: Deploy ECS Express service
         run: |
           aws ecs update-express-gateway-service \
-            --service-arn arn:aws/ecs:us-east-1:301846842985:service/default/gitquest-backend \
+            --service-arn arn:aws:ecs:us-east-1:301846842985:service/default/gitquest-backend \
             --primary-container image=301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest \
             --region us-east-1
