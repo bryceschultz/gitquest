@@ -120,6 +120,17 @@ function AppInner() {
     }
 
     /**
+     * Called by PlacementQuiz when the player finishes or skips.
+     * updatedAgent carries the new rank ('Field Agent') from the backend,
+     * which MissionMap needs to unlock free-roam access.
+     * @param {object|undefined} updatedAgent
+     */
+    function handlePlacementDone(updatedAgent) {
+        if (updatedAgent) setAgent(updatedAgent)
+        setScreen('map')
+    }
+
+    /**
      */
     function toggleSound() {
         setSoundOn(prev => !prev)
@@ -175,7 +186,7 @@ function AppInner() {
                 />
             )}
             {screen === 'placement' && (
-                <PlacementQuiz onDone={() => setScreen('map')} />
+                <PlacementQuiz onDone={handlePlacementDone} />
             )}
             {screen === 'leaderboard' && (<Leaderboard agent={agent} onBack={() => setScreen('map')} />)}
 

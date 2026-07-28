@@ -16,16 +16,16 @@ const agentSchema = new mongoose.Schema({
     rank:           { type: String, default: 'Recruit',
         enum: ['Recruit','Field Agent'] },
     // Result of the Field Agent placement quiz — a recommendation only.
-    // Field agents keep free-roam access to every mission regardless of
-    // this result; it's stored so the UI can surface where HQ suggests
-    // they begin.
+    // Field agents get free-roam access to every mission regardless of
+    // this result (set via rank === 'Field Agent'); it's stored purely so
+    // the UI can surface where HQ suggests they begin. Null if the
+    // player skipped the quiz.
     placement: {
-        recommendedLevel: { type: Number,  default: null },
-        pct:               { type: Number,  default: null },
-        correct:           { type: Number,  default: null },
-        total:             { type: Number,  default: null },
-        passed:            { type: Boolean, default: null },
-        completedAt:       { type: Date,    default: null },
+        recommendedLevel: { type: Number, default: null },
+        pct:               { type: Number, default: null },
+        correct:           { type: Number, default: null },
+        total:             { type: Number, default: null },
+        completedAt:       { type: Date,   default: null },
     },
 }, { timestamps: true });
 

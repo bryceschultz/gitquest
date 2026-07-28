@@ -7,8 +7,14 @@
 // Scoring is always done against the specific subset that was actually
 // shown (scorePlacement takes the questions array, not the full bank),
 // since which questions were asked changes attempt to attempt.
+//
+// Score maps to a recommended starting level:
+//   0–49%  → Level 1
+//   50–74% → Level 2
+//   75–100%→ Level 3
+// This is a recommendation only — Field Agents get free-roam access to
+// every mission regardless of score (see MissionMap.jsx).
 
-export const PLACEMENT_THRESHOLD = 0.75
 export const PLACEMENT_QUESTION_COUNT = 10
 
 export const PLACEMENT_QUESTION_BANK = [
@@ -126,6 +132,22 @@ export const PLACEMENT_QUESTION_BANK = [
     },
 ]
 
+// Score tiers, checked from highest to lowest.
+export const LEVEL_THRESHOLDS = [
+    { minPct: 75, level: 3 },
+    { minPct: 50, level: 2 },
+    { minPct: 0,  level: 1 },
+]
+
+/**
+ * @param {number} pct - 0 to 100
+ * @returns {number} recommended starting level (1, 2, or 3)
+ */
+export function recommendedLevelForPct(pct) {
+    const tier = LEVEL_THRESHOLDS.find(t => pct >= t.minPct)
+    return tier ? tier.level : 1
+}
+
 /**
  * Draw a random subset of `count` questions from `pool`, without repeats.
  * @param {number} count
@@ -141,7 +163,7 @@ export function getPlacementSet(count = PLACEMENT_QUESTION_COUNT, pool = PLACEME
  * Score a placement attempt against the specific questions that were shown.
  * @param {Array} questions - the subset of questions actually presented
  * @param {Object} answers - map of questionId -> selected choice index
- * @returns {{correct: number, total: number, pct: number, passed: boolean, recommendedLevel: number}}
+ * @returns {{correct: number, total: number, pct: number, recommendedLevel: number}}
  */
 export function scorePlacement(questions = [], answers = {}) {
     const total = questions.length
@@ -152,8 +174,7 @@ export function scorePlacement(questions = [], answers = {}) {
     }
 
     const pct = total > 0 ? Math.round((correct / total) * 100) : 0
-    const passed = total > 0 && correct / total >= PLACEMENT_THRESHOLD
-    const recommendedLevel = passed ? 2 : 1
+    const recommendedLevel = recommendedLevelForPct(pct)
 
-    return { correct, total, pct, passed, recommendedLevel }
+    return { correct, total, pct, recommendedLevel }
 }

@@ -3,79 +3,90 @@ import '@testing-library/jest-dom'
 import {
     PLACEMENT_QUESTION_BANK,
     PLACEMENT_QUESTION_COUNT,
-    PLACEMENT_THRESHOLD,
+    LEVEL_THRESHOLDS,
     getPlacementSet,
     scorePlacement,
+    recommendedLevelForPct,
 } from '../src/data/placement'
 
 describe('getPlacementSet', () => {
     test('draws PLACEMENT_QUESTION_COUNT (10) questions by default', () => {
-        const set = getPlacementSet()
-        expect(set).toHaveLength(PLACEMENT_QUESTION_COUNT)
+        expect(getPlacementSet()).toHaveLength(PLACEMENT_QUESTION_COUNT)
     })
 
     test('every drawn question comes from the bank, with no duplicates', () => {
         const set = getPlacementSet()
         const bankIds = new Set(PLACEMENT_QUESTION_BANK.map(q => q.id))
         const setIds = set.map(q => q.id)
-        expect(new Set(setIds).size).toBe(setIds.length) // no dupes
+        expect(new Set(setIds).size).toBe(setIds.length)
         setIds.forEach(id => expect(bankIds.has(id)).toBe(true))
     })
+})
 
-    test('respects a smaller requested count', () => {
-        expect(getPlacementSet(3)).toHaveLength(3)
+describe('recommendedLevelForPct', () => {
+    test('0-49% recommends Level 1', () => {
+        expect(recommendedLevelForPct(0)).toBe(1)
+        expect(recommendedLevelForPct(49)).toBe(1)
     })
-
-    test('caps at the pool size if count exceeds it', () => {
-        expect(getPlacementSet(9999)).toHaveLength(PLACEMENT_QUESTION_BANK.length)
+    test('50-74% recommends Level 2', () => {
+        expect(recommendedLevelForPct(50)).toBe(2)
+        expect(recommendedLevelForPct(74)).toBe(2)
+    })
+    test('75-100% recommends Level 3', () => {
+        expect(recommendedLevelForPct(75)).toBe(3)
+        expect(recommendedLevelForPct(100)).toBe(3)
+    })
+    test('thresholds are the approved 0/50/75 split', () => {
+        expect(LEVEL_THRESHOLDS.map(t => t.minPct)).toEqual([75, 50, 0])
     })
 })
 
 describe('scorePlacement', () => {
-    // Fixed 8-question slice so these tests are deterministic regardless of
-    // random draw behavior.
-    const fixedSet = PLACEMENT_QUESTION_BANK.slice(0, 8)
+    const fixedSet = PLACEMENT_QUESTION_BANK.slice(0, 10)
     const allCorrect = Object.fromEntries(fixedSet.map(q => [q.id, q.answer]))
 
-    test('perfect score passes and recommends Level 2', () => {
+    test('perfect score (100%) recommends Level 3', () => {
         const r = scorePlacement(fixedSet, allCorrect)
-        expect(r).toMatchObject({ correct: 8, total: 8, pct: 100, passed: true, recommendedLevel: 2 })
+        expect(r).toMatchObject({ correct: 10, total: 10, pct: 100, recommendedLevel: 3 })
     })
 
-    test('exactly 75% passes (6/8), just below fails (5/8) and recommends Level 1', () => {
+    test('a mid-range score (50-74%) recommends Level 2', () => {
         const sixRight = { ...allCorrect }
-        const [q1, q2] = fixedSet
-        sixRight[q1.id] = (q1.answer + 1) % q1.choices.length
-        sixRight[q2.id] = (q2.answer + 1) % q2.choices.length
-        expect(scorePlacement(fixedSet, sixRight).passed).toBe(true)
+        for (let i = 0; i < 4; i++) {
+            const q = fixedSet[i]
+            sixRight[q.id] = (q.answer + 1) % q.choices.length
+        }
+        const r = scorePlacement(fixedSet, sixRight)
+        expect(r.pct).toBe(60)
+        expect(r.recommendedLevel).toBe(2)
+    })
 
-        const fiveRight = { ...sixRight }
-        const q3 = fixedSet[2]
-        fiveRight[q3.id] = (q3.answer + 1) % q3.choices.length
-        const r = scorePlacement(fixedSet, fiveRight)
-        expect(r.passed).toBe(false)
+    test('a low score (<50%) recommends Level 1', () => {
+        const twoRight = { ...allCorrect }
+        for (let i = 0; i < 8; i++) {
+            const q = fixedSet[i]
+            twoRight[q.id] = (q.answer + 1) % q.choices.length
+        }
+        const r = scorePlacement(fixedSet, twoRight)
+        expect(r.pct).toBe(20)
         expect(r.recommendedLevel).toBe(1)
     })
 
     test('unanswered questions count as wrong, never throw', () => {
-        expect(scorePlacement(fixedSet, {})).toMatchObject({ correct: 0, passed: false })
+        expect(scorePlacement(fixedSet, {})).toMatchObject({ correct: 0, recommendedLevel: 1 })
         expect(scorePlacement(fixedSet, undefined).correct).toBe(0)
-        expect(scorePlacement([], {})).toMatchObject({ correct: 0, total: 0, pct: 0, passed: false })
-    })
-
-    test('the threshold is the approved 75%', () => {
-        expect(PLACEMENT_THRESHOLD).toBe(0.75)
+        expect(scorePlacement([], {})).toMatchObject({ correct: 0, total: 0, pct: 0, recommendedLevel: 1 })
     })
 })
 
 // ── Component tests ──────────────────────────────────────────────
 // getPlacementSet is mocked to a fixed slice so the rendered questions are
-// deterministic; scorePlacement/PLACEMENT_THRESHOLD use the real
+// deterministic; scorePlacement/recommendedLevelForPct use the real
 // implementation.
 const FIXED_SET = PLACEMENT_QUESTION_BANK.slice(0, PLACEMENT_QUESTION_COUNT)
 
-jest.mock('../src/game/placement', () => {
-    const actual = jest.requireActual('../src/game/placement')
+jest.mock('../src/placement', () => {
+    const actual = jest.requireActual('../src/placement')
     return {
         ...actual,
         getPlacementSet: () => actual.PLACEMENT_QUESTION_BANK.slice(0, actual.PLACEMENT_QUESTION_COUNT),
@@ -94,13 +105,14 @@ describe('PlacementQuiz component', () => {
                     json: () => Promise.resolve({ levels: [
                             { levelNumber: 1, title: 'Basic Training' },
                             { levelNumber: 2, title: 'Field Operations' },
+                            { levelNumber: 3, title: 'Deep Cover' },
                         ]}),
                 })
             }
             if (String(url).includes('/agents/placement')) {
                 return Promise.resolve({
                     ok: true,
-                    json: () => Promise.resolve({ agent: {} }),
+                    json: () => Promise.resolve({ agent: { rank: 'Field Agent' } }),
                 })
             }
             return Promise.reject(new Error(`Unexpected fetch: ${url}`))
@@ -113,62 +125,121 @@ describe('PlacementQuiz component', () => {
 
     const renderQuiz = (onDone = () => {}) => render(<PlacementQuiz onDone={onDone} />)
 
-    test('renders exactly 10 questions', () => {
+    const answer = (q, idx = q.answer) => fireEvent.click(screen.getByText(q.choices[idx]))
+    const clickNext = () => fireEvent.click(screen.getByText('Next →'))
+
+    test('shows one question at a time', () => {
         renderQuiz()
-        expect(screen.getAllByText(/^Q\d+\./)).toHaveLength(PLACEMENT_QUESTION_COUNT)
+        expect(screen.getByText(FIXED_SET[0].prompt)).toBeInTheDocument()
+        expect(screen.queryByText(FIXED_SET[1].prompt)).not.toBeInTheDocument()
+        expect(screen.getByText('Question 1 / 10')).toBeInTheDocument()
     })
 
-    test('submit is disabled until every question is answered', () => {
+    test('Next is disabled until the current question is answered, then advances', () => {
         renderQuiz()
-        expect(screen.getByText('Submit answers')).toBeDisabled()
-        for (const q of FIXED_SET) {
-            fireEvent.click(screen.getByText(q.choices[q.answer]))
+        expect(screen.getByText('Next →')).toBeDisabled()
+        answer(FIXED_SET[0])
+        expect(screen.getByText('Next →')).toBeEnabled()
+        clickNext()
+        expect(screen.getByText(FIXED_SET[1].prompt)).toBeInTheDocument()
+        expect(screen.queryByText(FIXED_SET[0].prompt)).not.toBeInTheDocument()
+        expect(screen.getByText('Question 2 / 10')).toBeInTheDocument()
+    })
+
+    test('Back returns to the previous question and preserves the earlier answer', () => {
+        renderQuiz()
+        answer(FIXED_SET[0])
+        clickNext()
+        fireEvent.click(screen.getByText('← Back'))
+        expect(screen.getByText(FIXED_SET[0].prompt)).toBeInTheDocument()
+        // previously selected choice still highlighted / Next still enabled without re-clicking
+        expect(screen.getByText('Next →')).toBeEnabled()
+    })
+
+    test('the last question shows "Submit answers" instead of "Next"', () => {
+        renderQuiz()
+        for (let i = 0; i < FIXED_SET.length - 1; i++) {
+            answer(FIXED_SET[i])
+            clickNext()
         }
-        expect(screen.getByText('Submit answers')).toBeEnabled()
+        expect(screen.getByText(FIXED_SET[FIXED_SET.length - 1].prompt)).toBeInTheDocument()
+        expect(screen.queryByText('Next →')).not.toBeInTheDocument()
+        expect(screen.getByText('Submit answers')).toBeInTheDocument()
     })
 
-    test('a perfect submission shows the pass result and posts it to the backend', async () => {
+    test('a perfect run shows Level 3 and posts recommendedLevel 3', async () => {
         renderQuiz()
-        for (const q of FIXED_SET) {
-            fireEvent.click(screen.getByText(q.choices[q.answer]))
+        for (let i = 0; i < FIXED_SET.length; i++) {
+            answer(FIXED_SET[i])
+            if (i < FIXED_SET.length - 1) clickNext()
         }
         fireEvent.click(screen.getByText('Submit answers'))
 
         expect(await screen.findByText(/10 \/ 10 — 100%/)).toBeInTheDocument()
-        expect(await screen.findByText(/Recommended start: Level 2 — Field Operations/)).toBeInTheDocument()
+        expect(await screen.findByText(/Level 3 — Deep Cover/)).toBeInTheDocument()
 
         await waitFor(() => {
-            const placementCall = global.fetch.mock.calls.find(([url]) => String(url).includes('/agents/placement'))
-            expect(placementCall).toBeTruthy()
-            const body = JSON.parse(placementCall[1].body)
-            expect(body).toMatchObject({ recommendedLevel: 2, pct: 100, correct: 10, total: 10, passed: true })
+            const call = global.fetch.mock.calls.find(([url]) => String(url).includes('/agents/placement'))
+            expect(call).toBeTruthy()
+            expect(JSON.parse(call[1].body)).toMatchObject({ recommendedLevel: 3, pct: 100, correct: 10, total: 10 })
         })
     })
 
-    test('a failing submission recommends Level 1 and still saves', async () => {
+    test('a poor run recommends Level 1, and every mission is still described as unlocked', async () => {
         renderQuiz()
-        // Answer everything wrong (offset by one choice)
-        for (const q of FIXED_SET) {
-            const wrongIdx = (q.answer + 1) % q.choices.length
-            fireEvent.click(screen.getByText(q.choices[wrongIdx]))
+        for (let i = 0; i < FIXED_SET.length; i++) {
+            const q = FIXED_SET[i]
+            answer(q, (q.answer + 1) % q.choices.length)
+            if (i < FIXED_SET.length - 1) clickNext()
         }
         fireEvent.click(screen.getByText('Submit answers'))
 
         expect(await screen.findByText(/0 \/ 10 — 0%/)).toBeInTheDocument()
-        expect(await screen.findByText(/Recommended start: Level 1 — Basic Training/)).toBeInTheDocument()
-        expect(await screen.findByText(/All missions remain open to you/)).toBeInTheDocument()
+        expect(await screen.findByText(/Level 1 — Basic Training/)).toBeInTheDocument()
+        expect(await screen.findByText(/Every mission is unlocked for you regardless/)).toBeInTheDocument()
     })
 
-    test('wrong answers get an explanation after submission (FR-06)', async () => {
+    test('wrong answers get an explanation on the result screen (FR-06)', async () => {
         renderQuiz()
-        FIXED_SET.forEach((q, i) => {
+        for (let i = 0; i < FIXED_SET.length; i++) {
+            const q = FIXED_SET[i]
             const idx = i === 0 ? (q.answer + 1) % q.choices.length : q.answer
-            fireEvent.click(screen.getAllByText(q.choices[idx])[0])
-        })
+            answer(q, idx)
+            if (i < FIXED_SET.length - 1) clickNext()
+        }
         fireEvent.click(screen.getByText('Submit answers'))
 
         const snippet = FIXED_SET[0].explanation.slice(0, 30).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
         expect(await screen.findByText(new RegExp('WHY: ' + snippet))).toBeInTheDocument()
+    })
+
+    test('onDone receives the updated agent (with new rank) after a full submission', async () => {
+        const onDone = jest.fn()
+        renderQuiz(onDone)
+        for (let i = 0; i < FIXED_SET.length; i++) {
+            answer(FIXED_SET[i])
+            if (i < FIXED_SET.length - 1) clickNext()
+        }
+        fireEvent.click(screen.getByText('Submit answers'))
+
+        fireEvent.click(await screen.findByText('To the mission map ▶'))
+        expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ rank: 'Field Agent' }))
+    })
+
+    test('skip placement still unlocks free-roam via the backend, from any question', async () => {
+        const onDone = jest.fn()
+        renderQuiz(onDone)
+        answer(FIXED_SET[0])
+        clickNext() // move to question 2 before skipping
+
+        fireEvent.click(screen.getByText(/skip placement/))
+
+        await waitFor(() => {
+            const call = global.fetch.mock.calls.find(([url]) => String(url).includes('/agents/placement'))
+            expect(call).toBeTruthy()
+            expect(JSON.parse(call[1].body)).toMatchObject({ skipped: true })
+        })
+        await waitFor(() => expect(onDone).toHaveBeenCalledWith(expect.objectContaining({ rank: 'Field Agent' })))
     })
 
     test('a failed save shows a non-blocking error but still lets the player continue', async () => {
@@ -183,20 +254,13 @@ describe('PlacementQuiz component', () => {
         })
 
         renderQuiz()
-        for (const q of FIXED_SET) {
-            fireEvent.click(screen.getByText(q.choices[q.answer]))
+        for (let i = 0; i < FIXED_SET.length; i++) {
+            answer(FIXED_SET[i])
+            if (i < FIXED_SET.length - 1) clickNext()
         }
         fireEvent.click(screen.getByText('Submit answers'))
 
         expect(await screen.findByText(/Couldn't save your result/)).toBeInTheDocument()
         expect(screen.getByText('To the mission map ▶')).toBeEnabled()
-    })
-
-    test('skip placement calls onDone without submitting anything', () => {
-        const onDone = jest.fn()
-        renderQuiz(onDone)
-        fireEvent.click(screen.getByText(/skip placement/))
-        expect(onDone).toHaveBeenCalled()
-        expect(global.fetch).not.toHaveBeenCalled()
     })
 })
