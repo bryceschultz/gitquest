@@ -33,7 +33,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t gitquest-backend .
+          docker build --platform linux/amd64 -t gitquest-backend .
 
       - name: Tag Docker image
         run: |
