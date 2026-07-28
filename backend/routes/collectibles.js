@@ -57,10 +57,14 @@ router.post('/:id/unlock', requireAuth, async (req, res) => {
         await agent.save();
 
         // Record ownership
-        await AgentCollectible.create({ agentId: req.agentId, collectibleId: item._id });
+        await AgentCollectible.create({
+            agentId: req.agentId,
+            collectibleId: item._id,
+            usesRemaining: item.effectType ? item.effectUses : null,
+        });
 
         res.json({
-            message:       `${item.name} acquired successfully`,
+            message: `${item.name} acquired successfully`,
             remainingCoins: agent.coins,
         });
     } catch (err) {
@@ -71,14 +75,27 @@ router.post('/:id/unlock', requireAuth, async (req, res) => {
 // POST /api/collectible/:id/unequip — remove ownership (makes item repurchasable)
 router.post('/:id/unequip', requireAuth, async (req, res) => {
     try {
+        const record = await AgentCollectible.findOne({
+            agentId: req.agentId, collectibleId: req.params.id,
+        }).populate('collectibleId');
+
+        if (!record) return res.status(404).json({ error: 'Item not owned' });
+
+        if (record.collectibleId?.effectType) {
+            // Consumable boost — activate it, don't delete
+            record.equipped = true;
+            await record.save();
+            return res.json({ ok: true, activated: true });
+        }
+
+        // Non-boost items — unchanged behavior
         await AgentCollectible.findOneAndDelete({
-            agentId:   req.agentId,
-            collectibleId: req.params.id,
-        })
-        res.json({ ok: true })
+            agentId: req.agentId, collectibleId: req.params.id,
+        });
+        res.json({ ok: true });
     } catch (err) {
-        res.status(500).json({ error: err.message })
+        res.status(500).json({ error: err.message });
     }
-})
+});
 
 export default router;

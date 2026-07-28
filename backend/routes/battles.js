@@ -2,6 +2,7 @@ import express     from 'express';
 import requireAuth from '../middleware/auth.js';
 import Battle      from '../models/Battle.js';
 import Agent       from '../models/Agent.js';
+import AgentCollectible from '../models/AgentCollectible.js';
 
 const router = express.Router();
 
@@ -39,15 +40,26 @@ router.post('/complete', requireAuth, async (req, res) => {
         );
 
         // Update agent totals
+        xpEarned = req.body.xpEarned ?? 0;
+        coinsEarned = req.body.coinsEarned ?? 0;
+
         if (passed) {
-            await Agent.findByIdAndUpdate(req.agentId, {
-                $inc: {
-                    totalXP:    xpEarned   ?? 0,
-                    coins:      coinsEarned ?? 0,
-                    totalMissions: 1,
-                    ...(perfectPass ? { perfectAttempts: 1 } : {}),
+            const active = await AgentCollectible.find({
+                agentId: req.agentId, equipped: true, usesRemaining: { $gt: 0 },
+            }).populate('collectibleId');
+
+            for (const ac of active) {
+                const c = ac.collectibleId;
+                if (c?.effectType === 'xpMultiplier')   xpEarned    = Math.round(xpEarned * c.effectValue);
+                if (c?.effectType === 'coinMultiplier') coinsEarned = Math.round(coinsEarned * c.effectValue);
+
+                ac.usesRemaining -= 1;
+                if (ac.usesRemaining <= 0) {
+                    await AgentCollectible.findByIdAndDelete(ac._id); // exhausted — repurchasable again
+                } else {
+                    await ac.save();
                 }
-            });
+            }
         }
 
         res.json({ battle });

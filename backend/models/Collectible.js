@@ -9,6 +9,10 @@ const collectibleSchema = new mongoose.Schema({
     isAvailable: { type: Boolean, default: true },
     emoji:     { type: String, default: null },
     effect:      { type: String, default: null },
+    effectType:  { type: String,
+        enum: ['xpMultiplier', 'coinMultiplier', null], default: null },
+    effectValue: { type: Number, default: null },
+    effectUses:  { type: Number, default: null }, // charges granted per purchase
 }, { timestamps: true });
 
 export default mongoose.model('Collectible', collectibleSchema);
