@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import WelcomeScreen from './components/WelcomeScreen'
+import PlacementQuiz from './components/PlacementQuiz'
 import MissionMap from './components/MissionMap'
 import TrainingPage from './components/TrainingPage'
 import TrophyRoom from './components/TrophyRoom'
@@ -65,11 +66,11 @@ function AppInner() {
         return () => { audio.pause(); audio.src = '' }
     }, [])
 
-    // Play on map/training/arsenal/trophy, pause on auth + welcome
+    // Play on map/training/arsenal/trophy, pause on auth + welcome + placement
     useEffect(() => {
         const audio = audioRef.current
         if (!audio) return
-        const shouldPlay = !['signin', 'signup', 'welcome'].includes(screen)
+        const shouldPlay = !['signin', 'signup', 'welcome', 'placement'].includes(screen)
         if (shouldPlay && soundOn) {
             audio.play().catch(() => {})
         } else {
@@ -146,8 +147,8 @@ function AppInner() {
         <div style={{ background: '#0a0e1a', minHeight: '100vh', width: '100%', position: 'relative', fontFamily: 'monospace' }}>
             <div style={{ position: 'fixed', inset: 0, ...GRID_STYLE, pointerEvents: 'none' }} />
 
-            {/* Sound button — hidden on auth + welcome */}
-            {screen !== 'signin' && screen !== 'signup' && screen !== 'welcome' && (
+            {/* Sound button — hidden on auth + welcome + placement */}
+            {screen !== 'signin' && screen !== 'signup' && screen !== 'welcome' && screen !== 'placement' && (
                 <button
                     onClick={toggleSound}
                     style={{ position: 'fixed', top: '1rem', right: '1rem', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: soundOn ? '#00ff88' : '#4a6fa5', background: '#0d1526', border: `1px solid ${soundOn ? '#00ff8844' : '#1a2a45'}`, borderRadius: 99, padding: '6px 14px', cursor: 'pointer', zIndex: 100, fontFamily: 'monospace' }}
@@ -157,7 +158,7 @@ function AppInner() {
             )}
 
             {/* Agent badge */}
-            {agent && screen !== 'signin' && screen !== 'signup' && (
+            {agent && screen !== 'signin' && screen !== 'signup' && screen !== 'placement' && (
                 <div style={{ position: 'fixed', top: '1rem', left: '1rem', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#00ff88', background: '#0d1526', border: '1px solid #00ff8844', borderRadius: 99, padding: '6px 14px', zIndex: 100, fontFamily: 'monospace' }}>
                     ◈ {agent.codename}
                     <span style={{ color: '#4a6fa5' }}>·</span>
@@ -167,7 +168,15 @@ function AppInner() {
 
             {screen === 'signin'  && <SignInPage  onSignIn={handleSignIn}  onGoToSignUp={() => setScreen('signup')} />}
             {screen === 'signup'  && <SignUpPage  onSignUp={handleSignUp}  onGoToSignIn={() => setScreen('signin')} />}
-            {screen === 'welcome' && <WelcomeScreen onSelect={() => setScreen('map')} onLogout={handleLogout} />}
+            {screen === 'welcome' && (
+                <WelcomeScreen
+                    onSelect={(choice) => setScreen(choice === 'vet' ? 'placement' : 'map')}
+                    onLogout={handleLogout}
+                />
+            )}
+            {screen === 'placement' && (
+                <PlacementQuiz onDone={() => setScreen('map')} />
+            )}
             {screen === 'leaderboard' && (<Leaderboard agent={agent} onBack={() => setScreen('map')} />)}
 
             {screen === 'map' && (
