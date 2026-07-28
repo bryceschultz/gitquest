@@ -31,23 +31,20 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build Docker image
-        run: |
-          docker build --platform linux/amd64 -t gitquest-backend .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Tag Docker image
-        run: |
-          docker tag gitquest-backend:latest \
-          301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest
-
-      - name: Push Docker image
-        run: |
-          docker push \
-          301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          platforms: linux/amd64
+          push: true
+          tags: 301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest
 
       - name: Deploy ECS Express service
         run: |
           aws ecs update-express-gateway-service \
-            --service-arn arn:aws:ecs:us-east-1:301846842985:service/default/gitquest-backend \
+            --service-arn arn:aws/ecs:us-east-1:301846842985:service/default/gitquest-backend \
             --primary-container image=301846842985.dkr.ecr.us-east-1.amazonaws.com/gitquest-backend:latest \
             --region us-east-1
