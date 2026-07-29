@@ -6,13 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="6df4f9d3-921e-4ee7-9db5-6e56bda30da6" name="Changes" comment="chore: remove node_modules from tracking">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/models/Agent.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/Agent.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/routes/agents.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routes/agents.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/App.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/MissionMap.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/MissionMap.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/PlacementQuiz.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/PlacementQuiz.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/data/placement.js" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/data/placement.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/placement.test.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/tests/placement.test.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

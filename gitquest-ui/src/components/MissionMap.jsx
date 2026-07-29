@@ -217,14 +217,12 @@ function MissionAssignmentHeader({ mission, level }) {
  * @returns {JSX.Element}
  * @constructor
  */
-function MissionPanel({level, missions, agent, onClose, onStartLevel}) {
+function MissionPanel({level, missions, onClose, onStartLevel}) {
     const {isLevelComplete} = useProgress()
     const color = LEVEL_COLORS[level.levelNumber] || '#00ff88'
     const completed = missions.filter(m => isLevelComplete(m._id)).length
     const total = missions.length
     const nextMission = missions.find(m => !isLevelComplete(m._id))
-    // Field agents get free-roam access — no mission is ever locked for them.
-    const isFieldAgent = agent?.rank === 'Field Agent'
 
     return (
         <div
@@ -339,7 +337,7 @@ function MissionPanel({level, missions, agent, onClose, onStartLevel}) {
                     {missions.map((mission, idx) => {
                         const done      = isLevelComplete(mission._id)
                         const isNext    = nextMission?._id === mission._id
-                        const locked    = !isFieldAgent && idx > 0 && !isLevelComplete(missions[idx - 1]._id) && !done
+                        const locked    = idx > 0 && !isLevelComplete(missions[idx - 1]._id) && !done
                         const isField   = mission.missionNumber === 5 || mission.missionNumber === 10
                         const rowColor  = isField ? '#ff5f1f' : color
 
@@ -463,10 +461,6 @@ export default function MissionMap({
     const [loading, setLoading] = useState(true)
     const [selectedLevel, setSelectedLevel] = useState(null)
     const [showCredits, setShowCredits] = useState(false)
-
-    // Field agents get free-roam access to every level/mission, regardless
-    // of completion order or placement score.
-    const isFieldAgent = agent?.rank === 'Field Agent'
 
     useEffect(() => {
         async function load() {
@@ -1083,10 +1077,7 @@ export default function MissionMap({
 
                         const isFirst = idx === 0
 
-                        // Field agents can access any level immediately;
-                        // everyone else unlocks sequentially.
                         const accessible =
-                            isFieldAgent ||
                             idx === 0 ||
                             levels
                                 .slice(0, idx)
@@ -1243,7 +1234,6 @@ export default function MissionMap({
                     <MissionPanel
                         level={selectedLevel}
                         missions={selectedMissions}
-                        agent={agent}
                         onClose={() =>
                             setSelectedLevel(null)
                         }

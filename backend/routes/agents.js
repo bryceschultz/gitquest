@@ -19,15 +19,19 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 // POST /api/agents/placement — persist the Field Agent placement quiz
-// result and grant free-roam access.
+// result and unlock the recommended starting point.
 //
-// Choosing the Field Agent path — whether the quiz is completed or
-// skipped — unlocks every mission (rank: 'Field Agent'). The score only
-// affects the recommended starting point, never access.
+// recommendedLevel maps to score as: 0-49% -> 1, 50-74% -> 2, 75-100% -> 3.
+// Every mission in every level BELOW recommendedLevel is marked completed
+// in AgentProgress, so the mission map's existing sequential-unlock logic
+// naturally opens those levels — no special-case bypass needed.
+//   - Level 1 (0-49%):   nothing marked complete
+//   - Level 2 (50-74%):  all Level 1 missions marked complete
+//   - Level 3 (75-100%): all Level 1 and Level 2 missions marked complete
 //
 // Body shapes:
-//   { skipped: true }                                             — skip
-//   { recommendedLevel, pct, correct, total }                      — scored
+//   { skipped: true }                                          — skip
+//   { recommendedLevel, pct, correct, total }                   — scored
 router.post('/placement', requireAuth, async (req, res) => {
     try {
         const { recommendedLevel, pct, correct, total, skipped } = req.body;
@@ -52,6 +56,34 @@ router.post('/placement', requireAuth, async (req, res) => {
                 total,
                 completedAt: new Date(),
             };
+
+            // Auto-complete every mission in levels below the recommended
+            // starting level.
+            if (recommendedLevel > 1) {
+                const lowerLevels = await Level.find({
+                    levelNumber: { $lt: recommendedLevel },
+                });
+                const lowerLevelIds = lowerLevels.map(l => l._id);
+
+                const missionsToComplete = await Mission.find({
+                    levelId: { $in: lowerLevelIds },
+                });
+
+                await Promise.all(
+                    missionsToComplete.map(m =>
+                        AgentProgress.findOneAndUpdate(
+                            { agentId: req.agentId, missionId: m._id },
+                            {
+                                agentId:     req.agentId,
+                                missionId:   m._id,
+                                status:      'completed',
+                                completedAt: new Date(),
+                            },
+                            { upsert: true, new: true }
+                        )
+                    )
+                );
+            }
         }
 
         const agent = await Agent.findByIdAndUpdate(req.agentId, update, { new: true })
