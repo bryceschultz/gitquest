@@ -5,6 +5,7 @@ module.exports = {
     "^.+\\.[jt]sx?$": "babel-jest",
   },
   moduleNameMapper: {
+    'buildConfig$': '<rootDir>/tests/__mocks__/configMock.cjs',
     "\\.(css|less|scss|sass)$": "<rootDir>/tests/__mocks__/styleMock.cjs",
   },
 };

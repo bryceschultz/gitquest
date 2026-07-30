@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ProgressContext, STORAGE_KEY, defaultProgress } from './context';
+import { apiEnabled, fetchProgress, pushProgress } from '../api';
 import { updatedAchievements } from '../game/achievements';
 import { coinBalance } from '../game/stats';
 
@@ -31,8 +32,37 @@ function withAchievements(progress) {
 
 export function ProgressProvider({ children }) {
   const [progress, setProgress] = useState(() => withAchievements(loadFromStorage()));
+  // agent = signed-in account when the dynamic (API) build is active; null in
+  // the static build or as a guest. Guest behavior is byte-identical to the
+  // localStorage-only app.
+  const [agent, setAgent] = useState(null);
+  const syncTimer = useRef(null);
+
+  // Server sync: after sign-in, adopt the server copy if one exists,
+  // otherwise seed the server with the local copy (first sign-in keeps
+  // whatever the guest already earned).
+  const adoptAgent = async (agentObj) => {
+    setAgent(agentObj);
+    if (!agentObj || !apiEnabled()) return;
+    try {
+      const remote = await fetchProgress();
+      if (remote && isValidProgressShape(remote)) {
+        setProgress(withAchievements({ ...defaultProgress, ...remote }));
+      } else {
+        await pushProgress(progress);
+      }
+    } catch { /* offline or server error: stay on local copy */ }
+  };
 
   // Auto-save to localStorage whenever progress changes.
+  // Debounced push to the server whenever progress changes while signed in.
+  useEffect(() => {
+    if (!apiEnabled() || !agent) return;
+    clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => { pushProgress(progress).catch(() => {}); }, 800);
+    return () => clearTimeout(syncTimer.current);
+  }, [progress, agent]);
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
@@ -130,6 +160,8 @@ export function ProgressProvider({ children }) {
   }
 
   const value = {
+    agent,
+    adoptAgent,
     progress,
     completeLevel,
     isLevelComplete,

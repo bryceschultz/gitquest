@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import WelcomeScreen from './components/WelcomeScreen'
 import MissionMap from './components/MissionMap'
@@ -6,6 +6,8 @@ import TrainingPage from './components/TrainingPage'
 import Arsenal from './components/Arsenal'
 import TrophyRoom from './components/TrophyRoom'
 import PlacementQuiz from './components/PlacementQuiz'
+import AuthPage from './components/AuthPage'
+import { apiEnabled, me, signOut } from './api'
 import { ProgressProvider } from './context/ProgressContext'
 import { useProgress } from './context/useProgress'
 
@@ -19,9 +21,25 @@ const GRID_STYLE = {
 // persisted into shared progress state (S3-02: onboarding mode is real,
 // not just a visual choice).
 function AppShell() {
-  const { setMode, setCurrent, progress } = useProgress()
-  const [screen, setScreen] = useState('welcome') // 'welcome' | 'placement' | 'map' | 'training' | 'arsenal' | 'trophy'
+  const { setMode, setCurrent, progress, agent, adoptAgent } = useProgress()
+  // In the dynamic (API) build, the first screen offers an optional sign-in;
+  // the static build starts at 'welcome' and never shows auth at all.
+  const [screen, setScreen] = useState(apiEnabled() ? 'auth' : 'welcome') // 'auth' | 'welcome' | 'placement' | 'map' | 'training' | 'arsenal' | 'trophy'
   const [activeLevel, setActiveLevel] = useState(null) // { levelId, questId }
+
+  // Returning session: adopt the agent from the auth cookie, then skip
+  // straight past the auth screen.
+  useEffect(() => {
+    if (!apiEnabled()) return
+    me().then(a => { if (a) { adoptAgent(a); setScreen('welcome') } })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSignOut = async () => {
+    try { await signOut() } catch { /* offline is fine */ }
+    adoptAgent(null)
+    setScreen('auth')
+  }
 
   const handleModeSelect = (mode) => {
     setMode(mode)
@@ -44,7 +62,21 @@ function AppShell() {
     <div style={{ background: '#0a0e1a', minHeight: '100vh', width: '100%', position: 'relative', fontFamily: 'monospace' }}>
       <div style={{ position: 'fixed', inset: 0, ...GRID_STYLE, pointerEvents: 'none' }} />
 
-      {screen === 'welcome' && <WelcomeScreen onSelect={handleModeSelect} />}
+      {screen === 'auth' && <AuthPage onDone={() => setScreen('welcome')} />}
+      {screen === 'welcome' && (
+        <>
+          <WelcomeScreen onSelect={handleModeSelect} />
+          {apiEnabled() && (
+            <div style={{ position: 'fixed', top: 10, right: 14, fontFamily: 'monospace', fontSize: 11, color: '#4a6fa5', zIndex: 30 }}>
+              {agent ? (
+                <span>◎ {agent.codename} · <button onClick={handleSignOut} style={{ background: 'none', border: 'none', color: '#4a6fa5', cursor: 'pointer', padding: 0, fontSize: 11, fontFamily: 'monospace', textDecoration: 'underline' }}>sign out</button></span>
+              ) : (
+                <button onClick={() => setScreen('auth')} style={{ background: 'none', border: 'none', color: '#4a6fa5', cursor: 'pointer', padding: 0, fontSize: 11, fontFamily: 'monospace', textDecoration: 'underline' }}>◎ sign in</button>
+              )}
+            </div>
+          )}
+        </>
+      )}
       {screen === 'placement' && <PlacementQuiz onDone={() => setScreen('map')} />}
       {screen === 'map' &&
         <MissionMap
