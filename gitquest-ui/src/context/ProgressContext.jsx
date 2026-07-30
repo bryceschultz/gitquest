@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
 const ProgressContext = createContext(null);
-//const BASE_URL = import.meta.env.local.VITE_API_URL //
-const BASE_URL = 'http://localhost:5001/api';
+const BASE_URL = import.meta.env.VITE_API_URL //
+//const BASE_URL = 'http://localhost:5001/api';
 
 /**
  *
