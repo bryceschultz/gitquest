@@ -5,19 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6df4f9d3-921e-4ee7-9db5-6e56bda30da6" name="Changes" comment="chore: remove node_modules from tracking">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/backend/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routes/battles.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routes/battles.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routes/collectibles.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routes/collectibles.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/seedCollectibles.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/seedCollectibles.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/Arsenal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/Arsenal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/Leaderboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/Leaderboard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/MissionMap.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/MissionMap.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/PlacementQuiz.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/PlacementQuiz.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/TrainingPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/TrainingPage.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gitquest-ui/src/components/TrophyRoom.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/gitquest-ui/src/components/TrophyRoom.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -244,7 +232,7 @@
       <workItem from="1784910885034" duration="4199000" />
       <workItem from="1785018453769" duration="18676000" />
       <workItem from="1785300269313" duration="2469000" />
-      <workItem from="1785356399751" duration="19950000" />
+      <workItem from="1785356399751" duration="20261000" />
     </task>
     <servers />
   </component>
