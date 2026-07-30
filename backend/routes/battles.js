@@ -15,34 +15,18 @@ router.post('/complete', requireAuth, async (req, res) => {
             attempts,
             hintUsed,
             passed,
-            xpEarned,
-            coinsEarned,
         } = req.body;
 
         const perfectPass = attempts === 1 && !hintUsed && passed;
 
-        // Upsert — one battle record per agent per mission
-        const battle = await Battle.findOneAndUpdate(
-            { agentId: req.agentId, missionId },
-            {
-                agentId: req.agentId,
-                missionId,
-                commandId,
-                attempts,
-                hintUsed,
-                passed,
-                perfectPass,
-                xpEarned,
-                coinsEarned,
-                completedAt: new Date(),
-            },
-            { upsert: true, new: true }
-        );
+        // Base reward amounts. Zeroed out entirely if the battle wasn't
+        // actually passed, regardless of what the client sent.
+        let xpEarned    = passed ? (req.body.xpEarned ?? 0) : 0;
+        let coinsEarned = passed ? (req.body.coinsEarned ?? 0) : 0;
 
-        // Update agent totals
-        xpEarned = req.body.xpEarned ?? 0;
-        coinsEarned = req.body.coinsEarned ?? 0;
-
+        // Apply any equipped, unexhausted boosts (Double XP Token / Double
+        // Coins) BEFORE the reward is recorded or credited, so both the
+        // Battle record and the agent's totals reflect the real amount.
         if (passed) {
             const active = await AgentCollectible.find({
                 agentId: req.agentId, equipped: true, usesRemaining: { $gt: 0 },
@@ -62,7 +46,39 @@ router.post('/complete', requireAuth, async (req, res) => {
             }
         }
 
-        res.json({ battle });
+        // Upsert — one battle record per agent per mission. Stores the
+        // FINAL (post-multiplier) amounts so history/leaderboards match
+        // what was actually credited to the agent.
+        const battle = await Battle.findOneAndUpdate(
+            { agentId: req.agentId, missionId },
+            {
+                agentId: req.agentId,
+                missionId,
+                commandId,
+                attempts,
+                hintUsed,
+                passed,
+                perfectPass,
+                xpEarned,
+                coinsEarned,
+                completedAt: new Date(),
+            },
+            { upsert: true, new: true }
+        );
+
+        // Credit the agent's totals
+        if (passed) {
+            await Agent.findByIdAndUpdate(req.agentId, {
+                $inc: {
+                    totalXP:       xpEarned,
+                    coins:         coinsEarned,
+                    totalMissions: 1,
+                    ...(perfectPass ? { perfectAttempts: 1 } : {}),
+                }
+            });
+        }
+
+        res.json({ battle, xpEarned, coinsEarned });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

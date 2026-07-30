@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getPlacementSet, scorePlacement } from '../data/placement'
 
-const BASE_URL = import.meta.env.VITE_API_URL //
+const BASE_URL = import.meta.env.VITE_API_URL
 //const BASE_URL = 'http://localhost:5001/api'
 
 // Placement assessment for the Field Agent route (FR-06, S3-02).

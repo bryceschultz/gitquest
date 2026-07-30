@@ -73,10 +73,10 @@ const collectibles = [
     },
     {
         name: 'Coin Multiplier',
-        description: 'Earn 1.5x coins on your next 3 completed missions.',
+        description: 'Earn double coins on your next completed mission.',
         type: 'boost', coinCost: 80, emoji: '🪙', isAvailable: true,
-        effect: '1.5x coins for next 3 missions.',
-        effectType: 'coinMultiplier', effectValue: 1.5, effectUses: 3,
+        effect: '2x coins on next mission.',
+        effectType: 'coinMultiplier', effectValue: 2, effectUses: 1,
     },
     {
         name: 'XP Surge',

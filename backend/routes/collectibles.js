@@ -14,18 +14,26 @@ router.get('/', requireAuth, async (req, res) => {
             AgentCollectible.find({ agentId: req.agentId }).populate('collectibleId'),
         ]);
 
-        const ownedIds = new Set(owned.map(o => String(o.collectibleId?._id)));
+        // Map collectibleId -> the agent's ownership record, so we can
+        // surface `equipped` (not just whether it's owned at all).
+        const ownedById = new Map(
+            owned.map(o => [String(o.collectibleId?._id), o])
+        );
 
-        const result = items.map(item => ({
-            _id:         item._id,
-            name:        item.name,
-            description: item.description,
-            type:        item.type,
-            coinCost:    item.coinCost,
-            emoji:       item.emoji,
-            effect:      item.effect,
-            owned:       ownedIds.has(String(item._id)),
-        }));
+        const result = items.map(item => {
+            const record = ownedById.get(String(item._id));
+            return {
+                _id:         item._id,
+                name:        item.name,
+                description: item.description,
+                type:        item.type,
+                coinCost:    item.coinCost,
+                emoji:       item.emoji,
+                effect:      item.effect,
+                owned:       !!record,
+                equipped:    !!record?.equipped,
+            };
+        });
 
         res.json({ items: result });
     } catch (err) {

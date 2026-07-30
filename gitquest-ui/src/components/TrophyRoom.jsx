@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
-const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL = 'http://localhost:5001/api'
+//const BASE_URL = import.meta.env.VITE_API_URL
+const BASE_URL = 'http://localhost:5001/api'
 
 const RARITY = {
   common:    { label: 'COMMON',    color: '#4a6fa5', border: '#1a2a45',    bg: '#0a1220' },

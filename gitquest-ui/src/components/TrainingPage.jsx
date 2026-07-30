@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useProgress } from '../context/ProgressContext'
 
-const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL = 'http://localhost:5001/api'
+const BASE_URL = import.meta.env.VITE_API_URL
+//const BASE_URL = 'http://localhost:5001/api'
 const COINS_PER_MISSION = 10
 const XP_PER_MISSION = 20
 

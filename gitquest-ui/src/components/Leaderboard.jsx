@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const BASE_URL = import.meta.env.VITE_API_URL //
+const BASE_URL = import.meta.env.VITE_API_URL
 //const BASE_URL = 'http://localhost:5001/api'
 
 const RANK_COLORS = {

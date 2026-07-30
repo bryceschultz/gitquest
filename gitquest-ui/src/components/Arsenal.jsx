@@ -89,7 +89,7 @@ export default function Collectible({ onBack }) {
       if (!res.ok) throw new Error(data.error || 'Purchase failed')
 
       setItems(prev => prev.map(i =>
-          i._id === item._id ? { ...i, owned: true } : i
+          i._id === item._id ? { ...i, owned: true, equipped: false } : i
       ))
 
       const deducted = data.remainingCoins
@@ -109,19 +109,24 @@ export default function Collectible({ onBack }) {
 
   // ── Use / unequip ──────────────────────────────────────────
   async function handleUse(item) {
-    if (!item.owned || using || buying) return
+    if (!item.owned || item.equipped || using || buying) return
     setUsing(item._id)
     try {
-      // Remove from agentCollectible — makes it available to repurchase
       const res = await fetch(`${BASE_URL}/collectible/${item._id}/unequip`, {
         method: 'POST',
         credentials: 'include',
       })
       if (!res.ok) throw new Error('Failed to unequip item')
+      const data = await res.json()
 
-      setItems(prev => prev.map(i =>
-          i._id === item._id ? { ...i, owned: false } : i
-      ))
+      setItems(prev => prev.map(i => {
+        if (i._id !== item._id) return i
+        // Consumable boosts get activated (stay owned, now equipped) rather
+        // than removed — they're consumed later, on mission completion.
+        return data.activated
+            ? { ...i, owned: true, equipped: true }
+            : { ...i, owned: false, equipped: false }
+      }))
 
       await new Promise(resolve => setTimeout(resolve, 2000))
 
@@ -242,26 +247,40 @@ export default function Collectible({ onBack }) {
                     </span>
 
                           {item.owned ? (
-                              // USE NOW button
-                              <button
-                                  onClick={() => handleUse(item)}
-                                  disabled={isUsing}
-                                  style={{
+                              item.equipped ? (
+                                  // ACTIVE — already equipped, will be consumed on next mission
+                                  <span style={{
                                     fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.08em',
                                     padding: '6px 16px', borderRadius: 6,
-                                    cursor: isUsing ? 'not-allowed' : 'pointer',
-                                    background: '#003322',
-                                    border: '1px solid #00ff88',
+                                    background: '#00220a',
+                                    border: '1px solid #00ff8866',
                                     color: '#00ff88',
                                     minWidth: 90, textAlign: 'center',
-                                    transition: 'all 0.2s',
-                                    boxShadow: '0 0 8px rgba(0,255,136,0.15)',
-                                  }}
-                                  onMouseEnter={e => { e.currentTarget.style.background = '#004d33' }}
-                                  onMouseLeave={e => { e.currentTarget.style.background = '#003322' }}
-                              >
-                                {isUsing ? '...' : 'USE NOW'}
-                              </button>
+                                  }}>
+                                    ◈ ACTIVE
+                                  </span>
+                              ) : (
+                                  // USE NOW button
+                                  <button
+                                      onClick={() => handleUse(item)}
+                                      disabled={isUsing}
+                                      style={{
+                                        fontFamily: 'monospace', fontSize: 11, letterSpacing: '0.08em',
+                                        padding: '6px 16px', borderRadius: 6,
+                                        cursor: isUsing ? 'not-allowed' : 'pointer',
+                                        background: '#003322',
+                                        border: '1px solid #00ff88',
+                                        color: '#00ff88',
+                                        minWidth: 90, textAlign: 'center',
+                                        transition: 'all 0.2s',
+                                        boxShadow: '0 0 8px rgba(0,255,136,0.15)',
+                                      }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = '#004d33' }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = '#003322' }}
+                                  >
+                                    {isUsing ? '...' : 'USE NOW'}
+                                  </button>
+                              )
                           ) : (
                               // PURCHASE / INSUFFICIENT button
                               <button

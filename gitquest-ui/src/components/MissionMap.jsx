@@ -1,7 +1,8 @@
 import {useEffect, useState} from 'react'
 import {useProgress} from '../context/ProgressContext'
 
-const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL = 'http://localhost:5001/api'
+const BASE_URL = import.meta.env.VITE_API_URL
+//const BASE_URL = 'http://localhost:5001/api'
 const LEVEL_COLORS = {1: '#00ff88', 2: '#ffb700', 3: '#ff4444'}
 
 const NODE_SIZE = 100
@@ -19,38 +20,26 @@ const nodePositions = [
  * Builds the placement recommendation banner copy from the agent's saved
  * placement result (see backend/routes/agents.js POST /placement) and the
  * loaded levels list (for friendly titles). Returns null if the agent has
- * no placement result (never took the quiz, or the save failed).
+ * no placement result (never took the quiz, or the save failed, or skipped).
+ *
+ * Note: this is informational only. Field Agents get every mission
+ * unlocked regardless of score — see `accessible` below, which checks
+ * agent.rank, not this recommendation.
  *
  * @param {object|null} agent
  * @param {Array} levels
- * @returns {{recommended: string, reason: string, unlockedText: string}|null}
+ * @returns {{recommended: string, reason: string}|null}
  */
 function getPlacementMessage(agent, levels) {
     const p = agent?.placement
     if (!p || typeof p.recommendedLevel !== 'number') return null
 
     const titleFor = (n) => levels.find(l => l.levelNumber === n)?.title
-
     const recTitle = titleFor(p.recommendedLevel)
     const recommended = `Level ${p.recommendedLevel}${recTitle ? ` — ${recTitle}` : ''}`
-    const reason = `You scored ${p.correct}/${p.total} (${p.pct}%) on your placement assessment.`
+    const reason = `You scored ${p.correct}/${p.total} (${p.pct}%) on your placement assessment. As a field agent, every mission is unlocked for you regardless — this is just a starting suggestion.`
 
-    let unlockedText
-    if (p.recommendedLevel <= 1) {
-        unlockedText = 'No levels were pre-unlocked — missions open in order as you complete them.'
-    } else {
-        const unlockedLevels = []
-        for (let n = 1; n < p.recommendedLevel; n++) {
-            const t = titleFor(n)
-            unlockedLevels.push(`Level ${n}${t ? ` — ${t}` : ''}`)
-        }
-        const joined = unlockedLevels.length > 1
-            ? unlockedLevels.slice(0, -1).join(', ') + ' and ' + unlockedLevels[unlockedLevels.length - 1]
-            : unlockedLevels[0]
-        unlockedText = `${joined} ${unlockedLevels.length > 1 ? 'have' : 'has'} already been unlocked for you.`
-    }
-
-    return { recommended, reason, unlockedText }
+    return { recommended, reason }
 }
 
 /**
@@ -504,6 +493,10 @@ export default function MissionMap({
         () => sessionStorage.getItem('placementBannerDismissed') !== 'true'
     )
 
+    // Field agents get free-roam access to every level, regardless of
+    // placement score or completion order. New Recruits unlock sequentially.
+    const isFieldAgent = agent?.rank === 'Field Agent'
+
     function dismissPlacementBanner() {
         setShowPlacementBanner(false)
         sessionStorage.setItem('placementBannerDismissed', 'true')
@@ -742,10 +735,6 @@ export default function MissionMap({
 
                             <div style={{ color: '#4a6fa5' }}>
                                 {placementMsg.reason}
-                            </div>
-
-                            <div style={{ color: '#4a6fa5' }}>
-                                {placementMsg.unlockedText}
                             </div>
                         </div>
 
@@ -1182,16 +1171,10 @@ export default function MissionMap({
 
                         const isFirst = idx === 0
 
-                        // Placement can unlock ACCESS to a level without any
-                        // of its missions being marked complete — e.g. a
-                        // 70% score unlocks Level 2 for browsing/starting,
-                        // but Level 1's own missions stay untouched.
-                        const unlockedByPlacement =
-                            typeof agent?.placement?.recommendedLevel === 'number' &&
-                            level.levelNumber <= agent.placement.recommendedLevel
-
+                        // Field Agents get every level unlocked immediately;
+                        // New Recruits unlock sequentially as before.
                         const accessible =
-                            unlockedByPlacement ||
+                            isFieldAgent ||
                             idx === 0 ||
                             levels
                                 .slice(0, idx)
@@ -1212,9 +1195,9 @@ export default function MissionMap({
                                     )
                                 })
 
-                        // A level unlocked purely by placement (no progress
-                        // in it yet) should still render in its "open"
-                        // color, not the greyed-out locked style.
+                        // A level unlocked purely because the agent is a
+                        // Field Agent (no progress in it yet) should still
+                        // render in its "open" color, not greyed-out.
                         const highlighted = isActive || isFirst || accessible
 
                         const strokeColor = isComplete
