@@ -4,4 +4,7 @@ module.exports = {
   transform: {
     "^.+\\.[jt]sx?$": "babel-jest",
   },
+  moduleNameMapper: {
+    "\\.(css|less|scss|sass)$": "<rootDir>/tests/styleMock.js",
+  },
 };
