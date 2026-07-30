@@ -17,10 +17,10 @@ const GRID_STYLE = {
     backgroundSize: '40px 40px',
 }
 
-//const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/1.7_1-consumatesurvivor.caf.wav' //
-const AUDIO_URL = 'http://localhost:5001/audio/1.7_1-consumatesurvivor.caf.wav'
-//const BASE_URL = import.meta.env.local.VITE_API_URL //
-const BASE_URL  = 'http://localhost:5001/api'
+const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/1.7_1-consumatesurvivor.caf.wav' //
+// const AUDIO_URL = 'http://localhost:5001/audio/1.7_1-consumatesurvivor.caf.wav'
+const BASE_URL = import.meta.env.local.VITE_API_URL //
+// const BASE_URL  = 'http://localhost:5001/api'
 
 /**
  * @returns {JSX.Element}
