@@ -249,3 +249,39 @@ describe('Field Assignment 1 — the real daily-loop sequence', () => {
     expect(isLevelUnlocked('M1FA', { ...progress, completedLevels: [...progress.completedLevels, 'M1L6'] })).toBe(true)
   })
 })
+
+// ————————————————————————————————————————————————————————————————
+// Adapted from Preeti's PR #11 suite (written against the pre-redesign
+// TrainingPage). Selectors updated to the current markup; the distinct
+// intent preserved here is keyboard (Enter) submission, which the
+// original suite covered and the redesign suite did not.
+// ————————————————————————————————————————————————————————————————
+describe('TrainingPage — keyboard submission (adapted from PR #11)', () => {
+  const typeAndEnter = (value) => {
+    const input = screen.getByLabelText('command input')
+    fireEvent.change(input, { target: { value } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+  }
+
+  test('a correct command submitted via Enter completes the lesson', () => {
+    renderLesson('M1L3', 'M1')
+    typeAndEnter('git status')
+    expect(screen.getByText(/COMMAND ACCEPTED/)).toBeInTheDocument()
+    act(() => jest.runAllTimers())
+    expect(screen.getByText(/OBJECTIVE SECURED/)).toBeInTheDocument()
+  })
+
+  test('a wrong command via Enter shows a diagnostic, and retry via Enter succeeds', () => {
+    renderLesson('M1L3', 'M1')
+    typeAndEnter('git log')
+    expect(screen.getByText(/won\u2019t accomplish this objective/)).toBeInTheDocument()
+    typeAndEnter('git status')
+    expect(screen.getByText(/COMMAND ACCEPTED/)).toBeInTheDocument()
+  })
+
+  test('empty Enter shows the specific empty-input message', () => {
+    renderLesson('M1L3', 'M1')
+    fireEvent.keyDown(screen.getByLabelText('command input'), { key: 'Enter' })
+    expect(screen.getByText(/didn\u2019t enter a command/)).toBeInTheDocument()
+  })
+})
