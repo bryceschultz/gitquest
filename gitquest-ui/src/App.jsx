@@ -17,8 +17,10 @@ const GRID_STYLE = {
     backgroundSize: '40px 40px',
 }
 
-const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/1.7_1-consumatesurvivor.caf.wav' // const AUDIO_URL = 'http://localhost:5001/audio/Trent Reznor - Intriguing Possibilities.wav'
-const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL  = 'http://localhost:5001/api'
+//const AUDIO_URL = import.meta.env.VITE_API_URL.replace(/\/api$/, '') + '/audio/1.7_1-consumatesurvivor.caf.wav' //
+const AUDIO_URL = 'http://localhost:5001/audio/1.7_1-consumatesurvivor.caf.wav'
+//const BASE_URL = import.meta.env.local.VITE_API_URL //
+const BASE_URL  = 'http://localhost:5001/api'
 
 /**
  * @returns {JSX.Element}
@@ -125,8 +127,9 @@ function AppInner() {
      * which MissionMap needs to unlock free-roam access.
      * @param {object|undefined} updatedAgent
      */
-    function handlePlacementDone(updatedAgent) {
+    async function handlePlacementDone(updatedAgent) {
         if (updatedAgent) setAgent(updatedAgent)
+        await reloadProgress()
         setScreen('map')
     }
 

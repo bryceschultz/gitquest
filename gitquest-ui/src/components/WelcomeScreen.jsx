@@ -53,7 +53,7 @@ function WelcomeScreen({ onSelect, onLogout }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, width: '100%', maxWidth: 560, marginBottom: '1.5rem' }}>
                 {[
                     { id: 'new', icon: '☰', title: 'New recruit', desc: 'Guided missions, unlocked in order. Learn Git through the operation.' },
-                    { id: 'vet', icon: '🗺', title: 'Field agent', desc: 'Free roam — jump to any mission. You know the tools.' },
+                    { id: 'vet', icon: '🗺', title: 'Field agent', desc: 'Free roam — Jump to any mission. You know the tools.' },
                 ].map(opt => (
                     <button
                         key={opt.id}

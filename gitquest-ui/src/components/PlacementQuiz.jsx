@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { getPlacementSet, scorePlacement } from '../data/placement'
 
-const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL = 'http://localhost:5001/api'
+//const BASE_URL = import.meta.env.local.VITE_API_URL //
+const BASE_URL = 'http://localhost:5001/api'
 
 // Placement assessment for the Field Agent route (FR-06, S3-02).
 // A random subset of PLACEMENT_QUESTION_BANK is drawn once per attempt,
@@ -237,7 +238,7 @@ export default function PlacementQuiz({ onDone }) {
                 </button>
 
                 {!isAnswered && (
-                    <span style={{ fontSize: 11, color: '#4a6fa5', fontFamily: 'monospace' }}>select an answer to continue</span>
+                    <span style={{ fontSize: 11, color: '#4a6fa5', fontFamily: 'monospace' }}> Select an answer to continue</span>
                 )}
 
                 <div style={{ flex: 1 }} />
@@ -246,7 +247,7 @@ export default function PlacementQuiz({ onDone }) {
                     disabled={saving}
                     style={{ fontSize: 11, color: '#4a6fa5', background: 'none', border: '1px solid #1a2a45', borderRadius: 6, padding: '6px 14px', cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'monospace' }}
                 >
-                    skip placement →
+                    Skip Placement →
                 </button>
             </div>
         </div>

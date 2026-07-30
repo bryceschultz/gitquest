@@ -4,7 +4,7 @@ import {useProgress} from '../context/ProgressContext'
 const BASE_URL = import.meta.env.VITE_API_URL // const BASE_URL = 'http://localhost:5001/api'
 const LEVEL_COLORS = {1: '#00ff88', 2: '#ffb700', 3: '#ff4444'}
 
-const NODE_SIZE = 80
+const NODE_SIZE = 100
 const SVG_W = 480
 const SVG_H = 180
 
@@ -14,6 +14,44 @@ const nodePositions = [
     {x: 200, y: 50},
     {x: 340, y: 50},
 ]
+
+/**
+ * Builds the placement recommendation banner copy from the agent's saved
+ * placement result (see backend/routes/agents.js POST /placement) and the
+ * loaded levels list (for friendly titles). Returns null if the agent has
+ * no placement result (never took the quiz, or the save failed).
+ *
+ * @param {object|null} agent
+ * @param {Array} levels
+ * @returns {{recommended: string, reason: string, unlockedText: string}|null}
+ */
+function getPlacementMessage(agent, levels) {
+    const p = agent?.placement
+    if (!p || typeof p.recommendedLevel !== 'number') return null
+
+    const titleFor = (n) => levels.find(l => l.levelNumber === n)?.title
+
+    const recTitle = titleFor(p.recommendedLevel)
+    const recommended = `Level ${p.recommendedLevel}${recTitle ? ` — ${recTitle}` : ''}`
+    const reason = `You scored ${p.correct}/${p.total} (${p.pct}%) on your placement assessment.`
+
+    let unlockedText
+    if (p.recommendedLevel <= 1) {
+        unlockedText = 'No levels were pre-unlocked — missions open in order as you complete them.'
+    } else {
+        const unlockedLevels = []
+        for (let n = 1; n < p.recommendedLevel; n++) {
+            const t = titleFor(n)
+            unlockedLevels.push(`Level ${n}${t ? ` — ${t}` : ''}`)
+        }
+        const joined = unlockedLevels.length > 1
+            ? unlockedLevels.slice(0, -1).join(', ') + ' and ' + unlockedLevels[unlockedLevels.length - 1]
+            : unlockedLevels[0]
+        unlockedText = `${joined} ${unlockedLevels.length > 1 ? 'have' : 'has'} already been unlocked for you.`
+    }
+
+    return { recommended, reason, unlockedText }
+}
 
 /**
  *
@@ -461,6 +499,15 @@ export default function MissionMap({
     const [loading, setLoading] = useState(true)
     const [selectedLevel, setSelectedLevel] = useState(null)
     const [showCredits, setShowCredits] = useState(false)
+    const placementMsg = getPlacementMessage(agent, levels)
+    const [showPlacementBanner, setShowPlacementBanner] = useState(
+        () => sessionStorage.getItem('placementBannerDismissed') !== 'true'
+    )
+
+    function dismissPlacementBanner() {
+        setShowPlacementBanner(false)
+        sessionStorage.setItem('placementBannerDismissed', 'true')
+    }
 
     useEffect(() => {
         async function load() {
@@ -660,6 +707,64 @@ export default function MissionMap({
                 >
                     MISSION MAP — OPERATION SHADOW BREACH
                 </div>
+
+                {/* Placement recommendation banner */}
+                {placementMsg && showPlacementBanner && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 12,
+                            background: '#0d1526',
+                            border: '1px solid #00ff8844',
+                            borderLeft: '3px solid #00ff88',
+                            borderRadius: 8,
+                            padding: '12px 16px',
+                            margin: '0 auto 1.5rem',
+                            maxWidth: 560,
+                            width: '100%',
+                        }}
+                    >
+                        <span style={{ fontSize: 16, color: '#00ff88' }}>◈</span>
+
+                        <div
+                            style={{
+                                flex: 1,
+                                fontFamily: 'monospace',
+                                fontSize: 12,
+                                color: '#c8daf0',
+                                lineHeight: 1.7,
+                            }}
+                        >
+                            <div style={{ color: '#00ff88', marginBottom: 4 }}>
+                                HQ recommends starting at {placementMsg.recommended}
+                            </div>
+
+                            <div style={{ color: '#4a6fa5' }}>
+                                {placementMsg.reason}
+                            </div>
+
+                            <div style={{ color: '#4a6fa5' }}>
+                                {placementMsg.unlockedText}
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={dismissPlacementBanner}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#4a6fa5',
+                                fontSize: 14,
+                                lineHeight: 1,
+                                cursor: 'pointer',
+                                padding: 0,
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
 
                 {/* Side buttons */}
                 <div
@@ -1077,7 +1182,16 @@ export default function MissionMap({
 
                         const isFirst = idx === 0
 
+                        // Placement can unlock ACCESS to a level without any
+                        // of its missions being marked complete — e.g. a
+                        // 70% score unlocks Level 2 for browsing/starting,
+                        // but Level 1's own missions stay untouched.
+                        const unlockedByPlacement =
+                            typeof agent?.placement?.recommendedLevel === 'number' &&
+                            level.levelNumber <= agent.placement.recommendedLevel
+
                         const accessible =
+                            unlockedByPlacement ||
                             idx === 0 ||
                             levels
                                 .slice(0, idx)
@@ -1098,21 +1212,26 @@ export default function MissionMap({
                                     )
                                 })
 
+                        // A level unlocked purely by placement (no progress
+                        // in it yet) should still render in its "open"
+                        // color, not the greyed-out locked style.
+                        const highlighted = isActive || isFirst || accessible
+
                         const strokeColor = isComplete
                             ? color + '66'
-                            : isActive || isFirst
+                            : highlighted
                                 ? color
                                 : '#1a2a45'
 
                         const fillColor = isComplete
                             ? '#0d1f15'
-                            : isActive || isFirst
+                            : highlighted
                                 ? color + '22'
                                 : '#0d1526'
 
                         const textColor = isComplete
                             ? color
-                            : isActive || isFirst
+                            : highlighted
                                 ? color
                                 : '#2a3a55'
 
@@ -1129,7 +1248,7 @@ export default function MissionMap({
                                         : 'not-allowed'
                                 }}
                             >
-                                {(isActive || isFirst) &&
+                                {highlighted &&
                                     !isComplete && (
                                         <rect
                                             x={pos.x - 4}

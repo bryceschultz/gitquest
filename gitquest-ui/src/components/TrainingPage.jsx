@@ -12,6 +12,12 @@ const RARITY_COLORS = {
     legendary: '#e4a020',
 }
 
+const DIFFICULTY_COLORS = {
+    easy:   '#00ff88',
+    medium: '#ffb700',
+    hard:   '#ff4444',
+}
+
 // ── Trophy Toast ──────────────────────────────────────────────
 function TrophyToast({ trophies, onDone }) {
     const [index, setIndex] = useState(0)
@@ -110,6 +116,59 @@ function ConfirmModal({ onStay, onLeave }) {
     )
 }
 
+// ── Difficulty Badge ────────────────────────────────────────────
+function DifficultyBadge({ level }) {
+    const color = DIFFICULTY_COLORS[level] || '#4a6fa5'
+    return (
+        <span style={{
+            fontSize: 10, fontFamily: 'monospace', letterSpacing: '0.08em',
+            padding: '3px 10px', borderRadius: 4,
+            border: `1px solid ${color}44`, color,
+            textTransform: 'uppercase',
+        }}>
+            {level}
+        </span>
+    )
+}
+
+// ── Briefing Section wrapper ────────────────────────────────────
+function BriefingSection({ heading, children }) {
+    return (
+        <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ fontSize: 10, color: '#4a6fa5', letterSpacing: '0.1em', fontFamily: 'monospace', marginBottom: 8 }}>
+                {heading.toUpperCase()}
+            </div>
+            <div style={{ background: '#080c17', border: '1px solid #1a2a45', borderRadius: 8, padding: '1rem 1.25rem', fontSize: 13, color: '#8aaccf', lineHeight: 1.8, fontFamily: 'monospace' }}>
+                {children}
+            </div>
+        </div>
+    )
+}
+
+// ── Terminal example block ──────────────────────────────────────
+function TerminalExample({ lines }) {
+    return (
+        <div style={{ background: '#040810', border: '1px solid #1a2a45', borderRadius: 8, padding: '12px 16px', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.8 }}>
+            {lines.map((line, i) => {
+                if (line.output) {
+                    return (
+                        <div key={i} style={{ whiteSpace: 'pre-wrap', color: '#4a6fa5', marginBottom: 6 }}>
+                            {line.output}
+                        </div>
+                    )
+                }
+                return (
+                    <div key={i} style={{ color: '#c8daf0', marginBottom: 2 }}>
+                        {line.prompt && <span style={{ color: '#00ff88', marginRight: 6 }}>{line.prompt}</span>}
+                        {line.cmd}
+                        {line.comment && <span style={{ color: '#2a3a55' }}> {line.comment}</span>}
+                    </div>
+                )
+            })}
+        </div>
+    )
+}
+
 // ── Battle Section ────────────────────────────────────────────
 function BattleSection({ battle, command, onComplete, onBattleStart }) {
     const [input, setInput]         = useState('')
@@ -120,6 +179,9 @@ function BattleSection({ battle, command, onComplete, onBattleStart }) {
     const [started, setStarted]     = useState(false)
 
     if (!command) return null
+
+    const hintText          = command.battle?.hint || command.hint
+    const hintUnlocksAfter  = command.hintUnlocksAfterAttempts ?? 1
 
     function validate(input) {
         try {
@@ -144,7 +206,7 @@ function BattleSection({ battle, command, onComplete, onBattleStart }) {
     const handleRetry = () => {
         setInput('')
         setSubmitted(false)
-        if (attempts >= 1) setShowHint(true)
+        if (attempts >= hintUnlocksAfter) setShowHint(true)
     }
 
     return (
@@ -160,7 +222,7 @@ function BattleSection({ battle, command, onComplete, onBattleStart }) {
 
             {showHint && (
                 <div style={{ background: '#0d1f15', border: '1px solid #00ff8833', borderRadius: 8, padding: '10px 14px', marginBottom: '1rem', fontSize: 12, color: '#00cc66', fontFamily: 'monospace' }}>
-                    💡 HINT: {command.hint}
+                    💡 HINT: {hintText}
                 </div>
             )}
 
@@ -177,7 +239,7 @@ function BattleSection({ battle, command, onComplete, onBattleStart }) {
                     }}
                     onKeyDown={e => { if (e.key === 'Enter') submitted && !correct ? handleRetry() : handleSubmit() }}
                     disabled={submitted && correct}
-                    placeholder="enter git command..."
+                    placeholder="Enter git command..."
                     style={{
                         flex: 1, background: '#040810',
                         border: `1px solid ${submitted ? (correct ? '#00ff88' : '#e24b4a') : '#1a2a45'}`,
@@ -375,6 +437,13 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
         )
     }
 
+    const hasBriefingContent = command && (
+        command.briefing?.whatItDoes?.body ||
+        command.briefing?.basicSyntax?.blocks?.length > 0 ||
+        command.briefing?.example?.terminal?.length > 0 ||
+        command.briefing?.watchOutFor?.warnings?.length > 0
+    )
+
     // ── Render ──────────────────────────────────────────────────
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
@@ -461,17 +530,73 @@ export default function TrainingPage({ missionId, levelId, allMissions = [], onB
                     </div>
                 </div>
 
-                {/* Command explainer */}
+                {/* Command detail */}
                 {command && (
                     <div style={{ marginBottom: '2rem' }}>
-                        <div style={{ fontSize: 11, color: '#00ff8888', letterSpacing: '0.12em', fontFamily: 'monospace', marginBottom: '0.75rem' }}>THE COMMAND</div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: 11, color: '#00ff8888', letterSpacing: '0.12em', fontFamily: 'monospace' }}>THE COMMAND</div>
+                            {command.difficulty && <DifficultyBadge level={command.difficulty} />}
+                        </div>
+
                         <div style={{ background: '#040810', border: '1px solid #1a2a45', borderRadius: 8, padding: '12px 16px', marginBottom: 10 }}>
                             <div style={{ fontFamily: 'monospace', fontSize: 15, color: '#00ff88' }}>$ {command.command}</div>
+                            {command.subtitle && (
+                                <div style={{ fontSize: 12, color: '#4a6fa5', marginTop: 4 }}>{command.subtitle}</div>
+                            )}
                         </div>
-                        <div style={{ background: '#080c17', border: '1px solid #1a2a45', borderRadius: 8, padding: '1rem 1.25rem', fontSize: 13, color: '#8aaccf', lineHeight: 1.8, fontFamily: 'monospace' }}>
-                            <span style={{ color: '#4a6fa5', fontSize: 10, letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>EXPLAINER</span>
-                            {command.explainer}
-                        </div>
+
+                        {/* Mission-intel narrative (about, falling back to legacy explainer) */}
+                        {(command.about || command.explainer) && (
+                            <div style={{ background: '#080c17', border: '1px solid #1a2a45', borderLeft: '3px solid #00ff8844', borderRadius: 8, padding: '1rem 1.25rem', fontSize: 13, color: '#8aaccf', lineHeight: 1.8, fontFamily: 'monospace', marginBottom: '1.25rem' }}>
+                                <span style={{ color: '#4a6fa5', fontSize: 10, letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>MISSION INTEL</span>
+                                {command.about || command.explainer}
+                            </div>
+                        )}
+
+                        {command.briefing?.whatItDoes?.body && (
+                            <BriefingSection heading="What it does">
+                                <p style={{ margin: 0 }}>{command.briefing.whatItDoes.body}</p>
+                            </BriefingSection>
+                        )}
+
+                        {command.briefing?.basicSyntax?.blocks?.length > 0 && (
+                            <BriefingSection heading="Basic syntax">
+                                {command.briefing.basicSyntax.blocks.map((b, i) => (
+                                    <div key={i} style={{ marginBottom: i < command.briefing.basicSyntax.blocks.length - 1 ? 12 : 0 }}>
+                                        <code style={{ display: 'block', background: '#040810', border: '1px solid #1a2a45', borderRadius: 6, padding: '8px 12px', color: '#00ff88', fontFamily: 'monospace', fontSize: 12 }}>
+                                            {b.code}
+                                        </code>
+                                        {b.desc && <div style={{ fontSize: 12, color: '#4a6fa5', marginTop: 4 }}>{b.desc}</div>}
+                                    </div>
+                                ))}
+                            </BriefingSection>
+                        )}
+
+                        {command.briefing?.example?.terminal?.length > 0 && (
+                            <BriefingSection heading="Example">
+                                <TerminalExample lines={command.briefing.example.terminal} />
+                            </BriefingSection>
+                        )}
+
+                        {command.briefing?.watchOutFor?.warnings?.length > 0 && (
+                            <BriefingSection heading="Watch out for">
+                                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                                    {command.briefing.watchOutFor.warnings.map((w, i) => (
+                                        <li key={i} style={{ marginBottom: i < command.briefing.watchOutFor.warnings.length - 1 ? 8 : 0, color: '#e4a020' }}>
+                                            <span style={{ color: '#8aaccf' }}>{w}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </BriefingSection>
+                        )}
+
+                        {/* Fallback for Command docs not yet migrated to the new briefing shape */}
+                        {!hasBriefingContent && command.explainer && (
+                            <div style={{ background: '#080c17', border: '1px solid #1a2a45', borderRadius: 8, padding: '1rem 1.25rem', fontSize: 13, color: '#8aaccf', lineHeight: 1.8, fontFamily: 'monospace' }}>
+                                <span style={{ color: '#4a6fa5', fontSize: 10, letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>EXPLAINER</span>
+                                {command.explainer}
+                            </div>
+                        )}
                     </div>
                 )}
 
