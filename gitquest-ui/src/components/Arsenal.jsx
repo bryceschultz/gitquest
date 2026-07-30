@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useProgress } from '../context/ProgressContext'
 
-//const BASE_URL = import.meta.env.local.VITE_API_URL //
-const BASE_URL   = 'http://localhost:5001/api'
+const BASE_URL = import.meta.env.VITE_API_URL //
+//const BASE_URL   = 'http://localhost:5001/api'
 const CATEGORIES = ['all', 'boost', 'cosmetic', 'tool']
 const CAT_LABELS = { all: 'ALL', boost: 'BOOSTS', cosmetic: 'COSMETICS', tool: 'TOOLS' }
 const CAT_COLORS = {
