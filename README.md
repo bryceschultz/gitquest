@@ -47,6 +47,15 @@ Build clean · lint 0 errors · **89/89 automated tests** (8 suites) plus 3 in t
 
 Cross-browser manual pass · deploy to GitHub Pages (wired via `npm run deploy`) · CI to run tests and publish results automatically on PRs (follow-on ticket — replaces committed test-report markdown) · future scope: repo graph (FR-10), full arsenal economy, accounts/sync.
 
+## Dynamic mode (database-backed deployment)
+
+The same branch builds two ways:
+
+- **Static (default, GitHub Pages backup):** build with no `VITE_API_URL`. No auth screen exists, progress lives in `localStorage` — behavior is identical to the pre-backend app.
+- **Dynamic:** run `backend/` (Express + MongoDB; see `backend/.env.example` for `MONGODB_URI`, `JWT_SECRET`, `CLIENT_URL`) and build the frontend with `VITE_API_URL=https://<backend-host>/api`. An optional sign-in appears (guest play still works); a signed-in agent's progress syncs to the server (`/api/progress`, whole-object upsert) and follows them across devices. First sign-in seeds the server from local progress, so nothing earned as a guest is lost.
+
+The curriculum is **never** stored in the database — missions live in the code registry (`gitquest-ui/src/missions/`), which is what preserves lesson content, Assignments, and Field Assignments across deployments.
+
 ## Documentation map
 
 - This README — project state, requirements traceability, decisions, remaining work.
