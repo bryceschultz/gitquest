@@ -20,6 +20,7 @@ import path from 'path'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 dotenv.config();
+console.log('CLIENT_URL is:', process.env.CLIENT_URL);
 
 const app = express();
 

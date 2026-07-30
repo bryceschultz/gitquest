@@ -32,6 +32,17 @@ router.get('/me', requireAuth, async (req, res) => {
 // Body shapes:
 //   { skipped: true }                                          — skip
 //   { recommendedLevel, pct, correct, total }                   — scored
+// POST /api/agents/placement — persist the Field Agent placement quiz
+// result. This only unlocks ACCESS to levels below the recommended
+// starting level (see MissionMap.jsx, which checks agent.placement) — it
+// never marks any mission as completed. Progress is only ever recorded
+// when the player actually plays and passes a mission.
+//
+// recommendedLevel maps to score as: 0-49% -> 1, 50-74% -> 2, 75-100% -> 3.
+//
+// Body shapes:
+//   { skipped: true }                                          — skip
+//   { recommendedLevel, pct, correct, total }                   — scored
 router.post('/placement', requireAuth, async (req, res) => {
     try {
         const { recommendedLevel, pct, correct, total, skipped } = req.body;
@@ -56,34 +67,6 @@ router.post('/placement', requireAuth, async (req, res) => {
                 total,
                 completedAt: new Date(),
             };
-
-            // Auto-complete every mission in levels below the recommended
-            // starting level.
-            if (recommendedLevel > 1) {
-                const lowerLevels = await Level.find({
-                    levelNumber: { $lt: recommendedLevel },
-                });
-                const lowerLevelIds = lowerLevels.map(l => l._id);
-
-                const missionsToComplete = await Mission.find({
-                    levelId: { $in: lowerLevelIds },
-                });
-
-                await Promise.all(
-                    missionsToComplete.map(m =>
-                        AgentProgress.findOneAndUpdate(
-                            { agentId: req.agentId, missionId: m._id },
-                            {
-                                agentId:     req.agentId,
-                                missionId:   m._id,
-                                status:      'completed',
-                                completedAt: new Date(),
-                            },
-                            { upsert: true, new: true }
-                        )
-                    )
-                );
-            }
         }
 
         const agent = await Agent.findByIdAndUpdate(req.agentId, update, { new: true })
@@ -108,11 +91,12 @@ router.get('/leaderboard', requireAuth, async (req, res) => {
             const xpData = await Battle.aggregate([
                 { $match: { passed: true } },
                 { $group: {
-                        _id:          '$agentId',
-                        totalXP:      { $sum: '$xpEarned' },
-                        lastCompleted:{ $min: '$completedAt' },
+                        _id:           '$agentId',
+                        totalXP:       { $sum: '$xpEarned' },
+                        lastCompleted: { $max: '$completedAt' },   // ← most recent activity
+                        firstCompleted:{ $min: '$completedAt' },   // ← for tie-breaking
                     }},
-                { $sort: { totalXP: -1, lastCompleted: 1 } },
+                { $sort: { totalXP: -1, firstCompleted: 1 } },  // ← tie-break by earliest
                 { $limit: 10 },
                 { $lookup: {
                         from:         'agents',
@@ -122,11 +106,11 @@ router.get('/leaderboard', requireAuth, async (req, res) => {
                     }},
                 { $unwind: '$agent' },
                 { $project: {
-                        _id:          0,
-                        agentId:      '$_id',
-                        codename:     '$agent.codename',
-                        totalXP:      1,
-                        lastCompleted:1,
+                        _id:           0,
+                        agentId:       '$_id',
+                        codename:      '$agent.codename',
+                        totalXP:       1,
+                        lastCompleted: 1,   // now shows most recent activity
                     }},
             ]);
 
