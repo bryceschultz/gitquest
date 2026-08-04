@@ -438,6 +438,10 @@ All routes are prefixed with `/api`. Authentication uses HTTP-only JWT cookies.
 
 ---
 
+### Screenshots
+
+---
+
 ## Team
 
 | Name | Role |
