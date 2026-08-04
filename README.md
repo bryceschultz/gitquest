@@ -21,7 +21,7 @@ GitQuest is an interactive web application that teaches Git through story-driven
 - [Deployment](#deployment)
 - [API Reference](#api-reference)
 - [Game Design](#game-design)
-- [Screenshots] (#screenshots)
+- [Screenshots](#screenshots)
 - [Team](#team)
 
 ---
@@ -439,7 +439,7 @@ All routes are prefixed with `/api`. Authentication uses HTTP-only JWT cookies.
 
 ---
 
-### Screenshots
+## Screenshots
 
 ---
 
