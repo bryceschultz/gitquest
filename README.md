@@ -21,6 +21,7 @@ GitQuest is an interactive web application that teaches Git through story-driven
 - [Deployment](#deployment)
 - [API Reference](#api-reference)
 - [Game Design](#game-design)
+- [Screenshots] (#screenshots)
 - [Team](#team)
 
 ---
